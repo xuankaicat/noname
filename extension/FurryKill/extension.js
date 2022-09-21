@@ -1031,7 +1031,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_shineng: {
                 audio: 2,
                 trigger: {
-                  global: "phaseAfter",
+                  global: "phaseEnd",
                 },
                 frequent: true,
                 filter: function (event, player) {
@@ -2187,7 +2187,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 filter: function (event, player) {
                   return player.countCards('h') - player.countMingzhiCard() > 0;
                 },
-                position: "he",
+                position: "h",
                 selectCard: [1, 2],
                 discard: false,
                 lose: false,
@@ -2306,7 +2306,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.5",
+      version: "1.9.115.2.6",
     },
   }
 })
