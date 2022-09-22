@@ -12,6 +12,80 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       var f = function (英文名) { if (config[英文名]) { for (var i in lib.characterPack[英文名]) { if (lib.character[i][4].indexOf("forbidai") < 0) lib.character[i][4].push("forbidai"); } } };
       f("FurryKill");
 
+      lib.element.content.furrykillDiscoverCard = function () {
+        "step 0";
+        game.cardsGotoOrdering(event.cards);
+        event.videoId = lib.status.videoId++;
+        event.time = get.utc();
+        "step 1";
+        event.target.chooseButton([event.prompt, event.cards], event.selectButton, event.forced)
+          .set('filterButton', event.filterButton)
+          .set('ai', event.ai)
+          .set('cards', event.cards);
+        "step 2";
+        event.result = result;
+        var time = 1000 - (get.utc() - event.time);
+        if (time > 0) {
+          game.delay(0, time);
+        }
+        if (result.bool && result.links) {
+          event.card = result.links[0];
+          event.result.card = event.card;
+        } else {
+          event.finish();
+        }
+        "step 3";
+        event.target.gain(event.card, "draw");
+      }
+
+      lib.element.player.furrykillDiscoverCard = function () {
+        var next = game.createEvent('furrykillDiscoverCard');
+        next.player = this;
+        for (var i = 0; i < arguments.length; i++) {
+          if (get.itemtype(arguments[i]) == 'player') {
+            next.target = arguments[i];
+          }
+          else if (get.itemtype(arguments[i]) == 'cards') {
+            next.cards = arguments[i];
+          }
+          else if (typeof arguments[i] == 'boolean') {
+            next.forced = arguments[i];
+          }
+          else if(typeof arguments[i]=='function'){
+            if(next.ai) next.filterButton=arguments[i];
+            else next.ai=arguments[i];
+          }
+          else if(get.itemtype(arguments[i])=='select'){
+            next.selectButton=arguments[i];
+          }
+          else if(typeof arguments[i]=='number'){
+            next.selectButton=[arguments[i],arguments[i]];
+          }
+          else if (typeof arguments[i] == 'string') {
+            if (next.prompt) {
+              next.str = arguments[i];
+            } else {
+              next.prompt = arguments[i];
+            }
+          }
+        }
+        next.player=this;
+        if(typeof next.forced!='boolean') next.forced=false;
+        if (next.target == undefined) next.target = this;
+        if(next.filterButton==undefined) next.filterButton= function (button) {
+          return ui.selected.buttons.length == 0;
+        };
+        if (next.selectButton == undefined) next.selectButton = [1, 1];
+        if (next.ai == undefined) next.ai = function (button) {
+          var val = get.buttonValue(button);
+          if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
+          return val;
+        };
+        next.setContent('furrykillDiscoverCard');
+        next._args = Array.from(arguments);
+        return next;
+      }
+
       lib.element.player.countDifferentCard = function (position) {
         var cards = this.getCards(position);
         var count = 0;
@@ -547,6 +621,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_mingxue", "furrykill_shuangci", "furrykill_hanlv"],
                 ["hiddenSkill", "des:霜狼"],
               ],
+              furrykill_qingyu: [
+                "male",
+                "furrykill_wolf",
+                3,
+                ["furrykill_xunzhou", "furrykill_tansu", "furrykill_lingshi"],
+                ["des:静时者"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -563,6 +644,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_gudong: "咕咚",
               furrykill_qinhan: "倾寒",
               furrykill_lanyuan: "岚渊",
+              furrykill_qingyu: "清羽",
             },
           },
           characterTitle: {
@@ -905,30 +987,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     },
                     content: function () {
                       "step 0";
-                      event.cards = get.cards(3);
-                      game.cardsGotoOrdering(event.cards);
-                      event.videoId = lib.status.videoId++;
-                      event.time = get.utc();
+                      var cards = get.cards(3);
+                      if(cards.length == 0) event.goto(2);
+                      player.furrykillDiscoverCard('潜猎：发现一张牌', cards, true);
                       "step 1";
-                      player.chooseButton(['潜猎：发现一张牌', event.cards]).set('filterButton', function (button) {
-                        return ui.selected.buttons.length == 0;
-                      }).set('ai', function (button) {
-                        return get.value(button.link);
-                      }).set('cards', event.cards);
-                      "step 2";
-                      if (result.bool && result.links) {
-                        event.cards2 = result.links;
-                      } else {
-                        event.finish();
-                      }
-                      var time = 1000 - (get.utc() - event.time);
-                      if (time > 0) {
-                        game.delay(0, time);
-                      }
-                      "step 3";
-                      var cards2 = event.cards2[0];
-                      player.gain(cards2, "draw");
-                      game.log(player, '从牌堆顶发现了一张牌');
+                      var card = result.card;
+                      player.gain(card, "draw");
+                      game.log(player, '从牌堆发现了', card);
 
                       if (_status.currentPhase == player) {
                         var evt = _status.event.getParent("phaseUse");
@@ -937,6 +1002,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                           evt.skipped = true;
                         }
                       }
+                      "step 2";
                       player.changeZhuanhuanji("furrykill_qianlie");
                       player.markSkill("furrykill_qianlie");
                     },
@@ -2215,6 +2281,121 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 }
               },
 
+              furrykill_xunzhou: {
+                forced: true,
+                trigger: {
+                  global: [
+                    "loseToDiscardpileAfter",
+                    //"cardsDiscardAfter",
+                    "loseAfter",
+                    "judgeEnd",
+                  ],
+                },
+                filter: function (event, player) {
+                  console.log(event.getParent().name);
+                  console.log(event);
+                  var parentName = event.getParent().name;
+                  if(event.name == 'judge' && get.position(event.orderingCards[0]) == 'd') return true;
+                  if(event.card && get.position(event.card) != 'd') return false;
+                  if(event.cards && get.position(event.cards[0]) != 'd') return false;
+                  var lingshi = event.getParent('furrykill_lingshi');
+                  if (lingshi && lingshi.name == "furrykill_lingshi") return false;
+
+                  if (event.name == 'lose'
+                    &&  (parentName == 'useCard'
+                      || parentName == 'discard'
+                    )) {
+                    return false;
+                  }
+                  console.log(parentName);
+                  if (event.result && event.result.bool != null) {
+                    return event.result.bool;
+                  }
+                  return true;
+                },
+                content: function () {
+                  var cards = [];
+                  if (trigger.cards2) {
+                    cards = cards.concat(trigger.cards2);
+                  } else if (trigger.cards) {
+                    cards = cards.concat(trigger.cards);
+                  }
+                  if (trigger.card1) {
+                    cards.add(trigger.card1);
+                  }
+                  if (trigger.card2) {
+                    cards.add(trigger.card2);
+                  }
+                  if (trigger.orderingCards) {
+                    cards = cards.concat(trigger.orderingCards);
+                  }
+                  console.log(trigger)
+                  console.log(cards);
+                  player.addToExpansion(cards, 'gain2', 'log').gaintag.add('furrykill_xunzhou');
+                },
+                onremove: function (player, skill) {
+                  var cards = player.getExpansions(skill);
+                  if (cards.length) player.loseToDiscardpile(cards);
+                },
+                marktext: "挚",
+                intro: {
+                  content: "expansion",
+                  markcount: "expansion",
+                },
+              },
+
+              furrykill_tansu: {
+                enable: "phaseUse",
+                usable: 1,
+                content: function () {
+                  'step 0';
+                  if (player.getExpansions('furrykill_xunzhou').length == 0) {
+                    event.goto(4);
+                  } else {
+                    var list = ["从牌堆发现", "从【挚】中发现"];
+                    player.chooseControl(list, true, function () {
+                      return "从牌堆发现";
+                    }).set('prompt', get.prompt2('furrykill_tansu'));
+                  }
+                  'step 1';
+                  if (result.control == "从牌堆发现") {
+                    event.goto(4);
+                  } else {
+                    var cards=player.getExpansions('furrykill_xunzhou');
+                    if(cards.length > 3) cards = cards.slice(0, 3);
+                    player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
+                  }
+                  'step 2';
+                  var card = result.card;
+                  player.gain(card, "draw");
+                  game.log(player, '从【挚】中发现了', card);
+                  'step 3';
+                  event.finish();
+                  'step 4';
+                  var cards = get.cards(3);
+                  if(cards.length == 0) event.finish();
+                  player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
+                  "step 5";
+                  var card = result.card;
+                  player.gain(card, "draw");
+                  game.log(player, '从牌堆发现了', card);
+                },
+              },
+
+              furrykill_lingshi: {
+                trigger: { global: "phaseAfter" },
+                locked: true,
+                forced: true,
+                filter: function (event, player) {
+                  var xunzhou = player.getExpansions('furrykill_xunzhou').length;
+                  return xunzhou != 0 && xunzhou % 10 == 0;
+                },
+                content: function () {
+                  player.loseToDiscardpile(player.getExpansions('furrykill_xunzhou'));
+                  player.insertPhase();
+                }
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -2293,6 +2474,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_shuangci_info: "你使用杀指定目标后，可令目标弃置X种类别的牌各一张（X为你明置牌的数量），否则此杀不可被响应。你的攻击距离+X。",
               furrykill_hanlv: "寒履",
               furrykill_hanlv_info: "出牌阶段限一次，你可以明置至多两张牌。结束阶段，若你所有手牌均明置，你可以摸一张牌。",
+              furrykill_xunzhou: "寻昼",
+              furrykill_xunzhou_info: "锁定技，每当有牌非因使用、弃置或零时进入弃牌堆后，你将这些牌扣置于武将牌旁，称为【挚】。",
+              furrykill_tansu: "探溯",
+              furrykill_tansu_info: "出牌阶段限一次，你可以从牌堆或【挚】中发现一张牌。",
+              furrykill_lingshi: "零时",
+              furrykill_lingshi_info: "锁定技，一名角色的回合结束后，若【挚】中的牌数量为10的倍数，你将所有【挚】置入弃牌堆，并进行一个额外的回合。",
             },
           },
         }, "FurryKill");
@@ -2306,7 +2493,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.6",
+      version: "1.9.115.2.7",
     },
   }
 })
