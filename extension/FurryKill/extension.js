@@ -11,504 +11,510 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     name: "FurryKill", editable: false, content: function (config, pack) {
       var f = function (英文名) { if (config[英文名]) { for (var i in lib.characterPack[英文名]) { if (lib.character[i][4].indexOf("forbidai") < 0) lib.character[i][4].push("forbidai"); } } };
       f("FurryKill");
-
-      lib.element.content.furrykillDiscoverCard = function () {
-        "step 0";
-        game.cardsGotoOrdering(event.cards);
-        event.videoId = lib.status.videoId++;
-        event.time = get.utc();
-        "step 1";
-        event.target.chooseButton([event.prompt, event.cards], event.selectButton, event.forced)
-          .set('filterButton', event.filterButton)
-          .set('ai', event.ai)
-          .set('cards', event.cards);
-        "step 2";
-        event.result = result;
-        var time = 1000 - (get.utc() - event.time);
-        if (time > 0) {
-          game.delay(0, time);
-        }
-        if (result.bool && result.links) {
-          event.card = result.links[0];
-          event.result.card = event.card;
-        } else {
-          event.finish();
-        }
-        "step 3";
-        event.target.gain(event.card, "draw");
-      }
-
-      lib.element.player.furrykillDiscoverCard = function () {
-        var next = game.createEvent('furrykillDiscoverCard');
-        next.player = this;
-        for (var i = 0; i < arguments.length; i++) {
-          if (get.itemtype(arguments[i]) == 'player') {
-            next.target = arguments[i];
-          }
-          else if (get.itemtype(arguments[i]) == 'cards') {
-            next.cards = arguments[i];
-          }
-          else if (typeof arguments[i] == 'boolean') {
-            next.forced = arguments[i];
-          }
-          else if(typeof arguments[i]=='function'){
-            if(next.ai) next.filterButton=arguments[i];
-            else next.ai=arguments[i];
-          }
-          else if(get.itemtype(arguments[i])=='select'){
-            next.selectButton=arguments[i];
-          }
-          else if(typeof arguments[i]=='number'){
-            next.selectButton=[arguments[i],arguments[i]];
-          }
-          else if (typeof arguments[i] == 'string') {
-            if (next.prompt) {
-              next.str = arguments[i];
-            } else {
-              next.prompt = arguments[i];
-            }
-          }
-        }
-        next.player=this;
-        if(typeof next.forced!='boolean') next.forced=false;
-        if (next.target == undefined) next.target = this;
-        if(next.filterButton==undefined) next.filterButton= function (button) {
-          return ui.selected.buttons.length == 0;
-        };
-        if (next.selectButton == undefined) next.selectButton = [1, 1];
-        if (next.ai == undefined) next.ai = function (button) {
-          var val = get.buttonValue(button);
-          if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
-          return val;
-        };
-        next.setContent('furrykillDiscoverCard');
-        next._args = Array.from(arguments);
-        return next;
-      }
-
-      lib.element.player.countDifferentCard = function (position) {
-        var cards = this.getCards(position);
-        var count = 0;
-        var hasBasic = false, hasTrick = false, hasEquip = false;
-        for (let i = 0; i < cards.length; i++) {
-          var type = get.type(cards[i]);
-          if (type == 'basic') {
-            hasBasic = true;
-          } else if (type == 'equip') {
-            hasEquip = true;
-          } else {
-            hasTrick = true;
-          }
-          if (hasBasic && hasTrick && hasEquip) break;
-        }
-        if (hasBasic) count++;
-        if (hasEquip) count++;
-        if (hasTrick) count++;
-        return count;
-      }
-
-      lib.filter.filterDifferentTypes = function (card) {
-        var cards = ui.selected.cards;
-        var length = cards.length;
-        var allow = ['basic', 'trick', 'equip'];
-        if (length > 0) allow.remove(get.type(cards[0], 'trick'));
-        if (length > 1) allow.remove(get.type(cards[1], 'trick'));
-        return allow.contains(get.type(card, 'trick'));
-      }
-
-      lib.skill.mingzhi = {
-        intro: {
-          content: 'cards',
-        },
-      };
-      lib.translate.mingzhi = '明置';
-
-      lib.element.content.mingzhiCard = function () {
-        "step 0"
-        event.result = {};
-        if (get.itemtype(cards) != 'cards') {
-          event.result.bool = false;
-          event.finish();
-          return;
-        }
-        if (!event.str) {
-          event.str = get.translation(player.name) + '明置了手牌';
-        }
-        event.dialog = ui.create.dialog(event.str, cards);
-        event.dialogid = lib.status.videoId++;
-        event.dialog.videoId = event.dialogid;
-
-        if (event.hiddencards) {
-          for (var i = 0; i < event.dialog.buttons.length; i++) {
-            if (event.hiddencards.contains(event.dialog.buttons[i].link)) {
-              event.dialog.buttons[i].className = 'button card';
-              event.dialog.buttons[i].innerHTML = '';
-            }
-          }
-        }
-        game.broadcast(function (str, cards, cards2, id) {
-          var dialog = ui.create.dialog(str, cards);
-          dialog.videoId = id;
-          if (cards2) {
-            for (var i = 0; i < dialog.buttons.length; i++) {
-              if (cards2.contains(dialog.buttons[i].link)) {
-                dialog.buttons[i].className = 'button card';
-                dialog.buttons[i].innerHTML = '';
-              }
-            }
-          }
-        }, event.str, cards, event.hiddencards, event.dialogid);
-        if (event.hiddencards) {
-          var cards2 = cards.slice(0);
-          for (var i = 0; i < event.hiddencards.length; i++) {
-            cards2.remove(event.hiddencards[i]);
-          }
-          game.log(player, '明置了', cards2);
-        }
-        else {
-          game.log(player, '明置了', cards);
-        }
-        game.delayx(2);
-        game.addVideo('showCards', player, [event.str, get.cardsInfo(cards)]);
-        "step 1"
-        game.broadcast('closeDialog', event.dialogid);
-        event.dialog.close();
-
-        if (!player.storage.mingzhi) player.storage.mingzhi = cards;
-        else player.storage.mingzhi = player.storage.mingzhi.concat(cards);
-        player.markSkill('mingzhi');
-        event.result.bool = true;
-        event.result.cards = cards;
-      }
-
-      lib.element.content.chooseCardToMingzhi = function () {
-        "step 0"
-        var next = player.chooseCard(event.selectCard, event.forced,
-          event.prompt, 'h', event.ai);
-        next.set("filterCard", event.filterCard);
-        "step 1"
-        if (result && result.bool && result.cards) {
-          let str = event.str ? event.str : "";
-          player.mingzhiCard(result.cards, str);
-        }
-
-        event.result = result;
-      }
-
-      lib.element.content.chooseMingzhiCard = function () {
-        "step 0"
-        if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
-          event.finish();
-          return;
-        }
-
-        var next = player.choosePlayerCard(event.selectButton, event.forced,
-          event.prompt, 'h', event.ai);
-        next.set("filterButton", event.filterButton);
-        "step 1"
-        if (result && result.bool && result.cards) {
-          let str = event.str ? event.str : "";
-          player.mingzhiCard(result.cards, str);
-        }
-
-        event.result = result;
-      }
-
-      lib.element.content.removeMingzhiCard = function () {
-        event.result = {};
-        if (get.itemtype(cards) != 'cards') {
-          event.finish();
-          event.result.bool = false;
-          return;
-        }
-        if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
-          event.result.bool = false;
-          event.finish();
-          return;
-        }
-        game.log(player, '暗置了', cards);
-        player.storage.mingzhi.removeArray(event.cards);
-        if (player.storage.mingzhi.length) {
-          player.syncStorage("mingzhi");
-          player.markSkill('mingzhi');
-        } else {
-          delete player.storage.mingzhi;
-          player.unmarkSkill('mingzhi');
-        }
-        event.result.bool = true;
-        event.result.cards = event.cards;
-      }
-
-      lib.element.content.chooseRemoveMingzhiCard = function () {
-        "step 0"
-        if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
-          event.finish();
-          return;
-        }
-        var next = player.choosePlayerCard(event.target, event.selectButton,
-          event.forced, event.prompt, 'h', event.ai);
-        next.set("filterButton", event.filterButton);
-        "step 1"
-        if (result && result.bool && result.links) {
-          player.removeMingzhiCard(result.links);
-        }
-
-        result.cards = result.links;
-        event._result = result;
-      }
-
-      lib.filter.filterMingzhiCard = function (player, card) {
-        return player.storage.mingzhi && player.storage.mingzhi.contains(card);
-      }
-
-      lib.element.player.countMingzhiCard = function () {
-        if (!this.storage.mingzhi) return 0;
-        return this.storage.mingzhi.length;
-      }
-
-      lib.element.player.getMingzhiCard = function () {
-        var getCards = [];
-        if (this.storage.mingzhi && this.storage.mingzhi.length) {
-          getCards = this.storage.mingzhi.concat();
-        }
-        return getCards;
-      }
-
-      lib.element.player.mingzhiCard = function (cards, str) {
-        var next = game.createEvent('mingzhiCard');
-        next.player = this;
-        next.str = str;
-
-        if (typeof cards == 'string') {
-          str = cards;
-          cards = next.str;
-          next.str = str;
-        }
-
-        if (get.itemtype(cards) == 'card') next.cards = [cards];
-        else if (get.itemtype(cards) == 'cards') next.cards = cards;
-
-        var mingzhiCards = this.getMingzhiCard();
-        for (var i = next.cards.length - 1; i >= 0; i--) {
-          if (mingzhiCards.contains(next.cards[i])) {
-            next.cards.splice(i, 1);
-          }
-        }
-
-        next.setContent('mingzhiCard');
-        if (!Array.isArray(next.cards) || !next.cards.length) {
-          _status.event.next.remove(next);
-        }
-        next._args = Array.from(arguments);
-        return next;
-      }
-
-      lib.element.player.chooseCardToMingzhi = function () {
-        var next = game.createEvent('chooseCardToMingzhi');
-        next.player = this;
-        for (var i = 0; i < arguments.length; i++) {
-          if (get.itemtype(arguments[i]) == 'player') {
-            next.target = arguments[i];
-          }
-          else if (typeof arguments[i] == 'number') {
-            next.selectCard = [arguments[i], arguments[i]];
-          }
-          else if (get.itemtype(arguments[i]) == 'select') {
-            next.selectCard = arguments[i];
-          }
-          else if (typeof arguments[i] == 'boolean') {
-            next.forced = arguments[i];
-          }
-          else if (typeof arguments[i] == 'function') {
-            next.ai = arguments[i];
-          }
-          else if (typeof arguments[i] == 'string') {
-            if (next.prompt) {
-              next.str = arguments[i];
-            } else {
-              next.prompt = arguments[i];
-            }
-          }
-        }
-        next.filterCard = function (card, player) {
-          return !lib.filter.filterMingzhiCard(player, card);
-        };
-        if (next.target == undefined) next.target = this;
-        if (next.selectCard == undefined) next.selectCard = [1, 1];
-        if (next.ai == undefined) next.ai = function (card) {
-          if (_status.event.att) {
-            return 11 - get.value(card);
-          }
-          return 0;
-        };
-        next.setContent('chooseCardToMingzhi');
-        next._args = Array.from(arguments);
-        if (next.player.countCards('h') == next.player.countMingzhiCard()) {
-          _status.event.next.remove(next);
-        }
-        return next;
-      }
-
-      lib.element.player.chooseMingzhiCard = function () {
-        var next = game.createEvent('chooseMingzhiCard');
-        next.player = this;
-        for (var i = 0; i < arguments.length; i++) {
-          if (get.itemtype(arguments[i]) == 'player') {
-            next.target = arguments[i];
-          }
-          else if (typeof arguments[i] == 'number') {
-            next.selectButton = [arguments[i], arguments[i]];
-          }
-          else if (get.itemtype(arguments[i]) == 'select') {
-            next.selectButton = arguments[i];
-          }
-          else if (typeof arguments[i] == 'boolean') {
-            next.forced = arguments[i];
-          }
-          else if (typeof arguments[i] == 'function') {
-            next.ai = arguments[i];
-          }
-          else if (typeof arguments[i] == 'string') {
-            if (next.prompt) {
-              next.str = arguments[i];
-            } else {
-              next.prompt = arguments[i];
-            }
-          }
-        }
-        next.filterButton = function (button, player) {
-          return !lib.filter.filterMingzhiCard(player, button.link);
-        };
-        if (next.target == undefined) next.target = this;
-        if (next.selectButton == undefined) next.selectButton = [1, 1];
-        if (next.ai == undefined) next.ai = function (button) {
-          var val = get.buttonValue(button);
-          if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
-          return val;
-        };
-        next.setContent('chooseMingzhiCard');
-        next._args = Array.from(arguments);
-        if (next.player.countCards('h', function (card) {
-          return !lib.filter.filterMingzhiCard(next.player, card);
-        })) {
-          _status.event.next.remove(next);
-        }
-        return next;
-      }
-
-      lib.element.player.removeMingzhiCard = function (cards) {
-        var next = game.createEvent('removeMingzhiCard');
-        next.player = this;
-        if (get.itemtype(cards) == 'card') next.cards = [cards];
-        else if (get.itemtype(cards) == 'cards') next.cards = cards;
-
-        let mingzhiCards = this.getMingzhiCard();
-        for (let i = next.cards.length - 1; i >= 0; i--) {
-          const element = next.cards[i];
-          if (!mingzhiCards.contains(element)) {
-            next.cards.splice(i, 1);
-          }
-        }
-        next.setContent('removeMingzhiCard');
-        if (!Array.isArray(next.cards) || !next.cards.length) {
-          _status.event.next.remove(next);
-        }
-        next._args = Array.from(arguments);
-        return next;
-      }
-
-      lib.element.player.chooseRemoveMingzhiCard = function () {
-        var next = game.createEvent('chooseRemoveMingzhiCard');
-        next.player = this;
-        for (var i = 0; i < arguments.length; i++) {
-          if (get.itemtype(arguments[i]) == 'player') {
-            next.target = arguments[i];
-          }
-          else if (typeof arguments[i] == 'number') {
-            next.selectButton = [arguments[i], arguments[i]];
-          }
-          else if (get.itemtype(arguments[i]) == 'select') {
-            next.selectButton = arguments[i];
-          }
-          else if (typeof arguments[i] == 'boolean') {
-            next.forced = arguments[i];
-          }
-          else if (typeof arguments[i] == 'function') {
-            if (next.ai) next.filterButton = arguments[i];
-            else next.ai = arguments[i];
-          }
-          else if (typeof arguments[i] == 'object' && arguments[i]) {
-            next.filterButton = function (button, player) {
-              return get.filter(arguments[i])(button.link);
-            };
-          }
-          else if (typeof arguments[i] == 'string') {
-            next.prompt = arguments[i];
-          }
-        }
-        if (next.filterButton == undefined) next.filterButton = lib.filter.all;
-
-        next.filterButton = function (button, player) {
-          const func = next.filterButton;
-          return lib.filter.filterMingzhiCard(player, button.link)
-            && func(button, player);
-        }
-        if (next.target == undefined) next.target = this;
-        if (next.selectButton == undefined) next.selectButton = [1, 1];
-        if (next.ai == undefined) next.ai = function (button) {
-          var val = get.buttonValue(button);
-          if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
-          return val;
-        };
-        next.setContent('chooseRemoveMingzhiCard');
-        next._args = Array.from(arguments);
-        if (next.player.countCards('h', function (card) {
-          return lib.filter.filterMingzhiCard(next.player, card);
-        })) {
-          _status.event.next.remove(next);
-        }
-        return next;
-      }
-
-      lib.skill._loseMingzhi = {
-        trigger: {
-          global: "loseEnd"
-        },
-        forced: true,
-        priority: 101,
-        popup: false,
-        forceDie: true,
-        filter: function (event, player) {
-          if (player.storage.mingzhi && player.storage.mingzhi.length) {
-            return true;
-          }
-        },
-        content: function () {
-          event.cards = trigger.cards;
-          let mingzhiCard = [];
-          for (var i = 0; i < event.cards.length; i++) {
-            if (player.storage.mingzhi && player.storage.mingzhi.contains(event.cards[i])) {
-              if (player.storage.mingzhi.length == 1) {
-                delete player.storage.mingzhi;
-                player.unmarkSkill('mingzhi');
-              } else {
-                player.storage.mingzhi.remove(event.cards[i]);
-                player.syncStorage('mingzhi');
-              }
-              mingzhiCard.push(event.cards[i]);
-            }
-          }
-          event.oCards = mingzhiCard;
-          if (event.oCards.length) {
-            event.source = trigger.player;
-            event.trigger("loseMingzhi");
-          }
-        },
-      };
-
-      lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie
     }, precontent: function (qs) {
       if (qs.enable) {
+
+        //#region 扩展
+
+        lib.element.content.furrykillDiscoverCard = function () {
+          "step 0";
+          if (event.gotoOrdering) game.cardsGotoOrdering(event.cards);
+          event.videoId = lib.status.videoId++;
+          event.time = get.utc();
+          "step 1";
+          event.target.chooseButton([event.prompt, event.cards], event.selectButton, event.forced)
+            .set('filterButton', event.filterButton)
+            .set('ai', event.ai)
+            .set('cards', event.cards);
+          "step 2";
+          event.result = result;
+          var time = 1000 - (get.utc() - event.time);
+          if (time > 0) {
+            game.delay(0, time);
+          }
+          if (result.bool && result.links) {
+            event.card = result.links[0];
+            event.result.card = event.card;
+          } else {
+            event.finish();
+          }
+          "step 3";
+          event.target.gain(event.card, "draw");
+        }
+
+        lib.element.player.furrykillDiscoverCard = function () {
+          var next = game.createEvent('furrykillDiscoverCard');
+          next.player = this;
+          for (var i = 0; i < arguments.length; i++) {
+            if (get.itemtype(arguments[i]) == 'player') {
+              next.target = arguments[i];
+            }
+            else if (get.itemtype(arguments[i]) == 'cards') {
+              next.cards = arguments[i];
+            }
+            else if (typeof arguments[i] == 'boolean') {
+              next.forced = arguments[i];
+            }
+            else if (typeof arguments[i] == 'function') {
+              if (next.ai) next.filterButton = arguments[i];
+              else next.ai = arguments[i];
+            }
+            else if (get.itemtype(arguments[i]) == 'select') {
+              next.selectButton = arguments[i];
+            }
+            else if (typeof arguments[i] == 'number') {
+              next.selectButton = [arguments[i], arguments[i]];
+            }
+            else if (typeof arguments[i] == 'string') {
+              if (next.prompt) {
+                next.str = arguments[i];
+              } else {
+                next.prompt = arguments[i];
+              }
+            }
+          }
+          next.player = this;
+          if (typeof next.forced != 'boolean') next.forced = false;
+          if (next.target == undefined) next.target = this;
+          if (next.filterButton == undefined) next.filterButton = function (button) {
+            return ui.selected.buttons.length == 0;
+          };
+          if (next.selectButton == undefined) next.selectButton = [1, 1];
+          if (next.ai == undefined) next.ai = function (button) {
+            var val = get.buttonValue(button);
+            if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
+            return val;
+          };
+          if (next.gotoOrdering == undefined) next.gotoOrdering = false;
+          next.setContent('furrykillDiscoverCard');
+          next._args = Array.from(arguments);
+          return next;
+        }
+
+        lib.element.player.countDifferentCard = function (position) {
+          var cards = this.getCards(position);
+          var count = 0;
+          var hasBasic = false, hasTrick = false, hasEquip = false;
+          for (let i = 0; i < cards.length; i++) {
+            var type = get.type(cards[i]);
+            if (type == 'basic') {
+              hasBasic = true;
+            } else if (type == 'equip') {
+              hasEquip = true;
+            } else {
+              hasTrick = true;
+            }
+            if (hasBasic && hasTrick && hasEquip) break;
+          }
+          if (hasBasic) count++;
+          if (hasEquip) count++;
+          if (hasTrick) count++;
+          return count;
+        }
+
+        lib.filter.filterDifferentTypes = function (card) {
+          var cards = ui.selected.cards;
+          var length = cards.length;
+          var allow = ['basic', 'trick', 'equip'];
+          if (length > 0) allow.remove(get.type(cards[0], 'trick'));
+          if (length > 1) allow.remove(get.type(cards[1], 'trick'));
+          return allow.contains(get.type(card, 'trick'));
+        }
+
+        lib.skill.mingzhi = {
+          intro: {
+            content: 'cards',
+          },
+        };
+        lib.translate.mingzhi = '明置';
+
+        lib.element.content.mingzhiCard = function () {
+          "step 0"
+          event.result = {};
+          if (get.itemtype(cards) != 'cards') {
+            event.result.bool = false;
+            event.finish();
+            return;
+          }
+          if (!event.str) {
+            event.str = get.translation(player.name) + '明置了手牌';
+          }
+          event.dialog = ui.create.dialog(event.str, cards);
+          event.dialogid = lib.status.videoId++;
+          event.dialog.videoId = event.dialogid;
+
+          if (event.hiddencards) {
+            for (var i = 0; i < event.dialog.buttons.length; i++) {
+              if (event.hiddencards.contains(event.dialog.buttons[i].link)) {
+                event.dialog.buttons[i].className = 'button card';
+                event.dialog.buttons[i].innerHTML = '';
+              }
+            }
+          }
+          game.broadcast(function (str, cards, cards2, id) {
+            var dialog = ui.create.dialog(str, cards);
+            dialog.videoId = id;
+            if (cards2) {
+              for (var i = 0; i < dialog.buttons.length; i++) {
+                if (cards2.contains(dialog.buttons[i].link)) {
+                  dialog.buttons[i].className = 'button card';
+                  dialog.buttons[i].innerHTML = '';
+                }
+              }
+            }
+          }, event.str, cards, event.hiddencards, event.dialogid);
+          if (event.hiddencards) {
+            var cards2 = cards.slice(0);
+            for (var i = 0; i < event.hiddencards.length; i++) {
+              cards2.remove(event.hiddencards[i]);
+            }
+            game.log(player, '明置了', cards2);
+          }
+          else {
+            game.log(player, '明置了', cards);
+          }
+          game.delayx(2);
+          game.addVideo('showCards', player, [event.str, get.cardsInfo(cards)]);
+          "step 1"
+          game.broadcast('closeDialog', event.dialogid);
+          event.dialog.close();
+
+          if (!player.storage.mingzhi) player.storage.mingzhi = cards;
+          else player.storage.mingzhi = player.storage.mingzhi.concat(cards);
+          player.markSkill('mingzhi');
+          event.result.bool = true;
+          event.result.cards = cards;
+        }
+
+        lib.element.content.chooseCardToMingzhi = function () {
+          "step 0"
+          var next = player.chooseCard(event.selectCard, event.forced,
+            event.prompt, 'h', event.ai);
+          next.set("filterCard", event.filterCard);
+          "step 1"
+          if (result && result.bool && result.cards) {
+            let str = event.str ? event.str : "";
+            player.mingzhiCard(result.cards, str);
+          }
+
+          event.result = result;
+        }
+
+        lib.element.content.chooseMingzhiCard = function () {
+          "step 0"
+          if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
+            event.finish();
+            return;
+          }
+
+          var next = player.choosePlayerCard(event.selectButton, event.forced,
+            event.prompt, 'h', event.ai);
+          next.set("filterButton", event.filterButton);
+          "step 1"
+          if (result && result.bool && result.cards) {
+            let str = event.str ? event.str : "";
+            player.mingzhiCard(result.cards, str);
+          }
+
+          event.result = result;
+        }
+
+        lib.element.content.removeMingzhiCard = function () {
+          event.result = {};
+          if (get.itemtype(cards) != 'cards') {
+            event.finish();
+            event.result.bool = false;
+            return;
+          }
+          if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
+            event.result.bool = false;
+            event.finish();
+            return;
+          }
+          game.log(player, '暗置了', cards);
+          player.storage.mingzhi.removeArray(event.cards);
+          if (player.storage.mingzhi.length) {
+            player.syncStorage("mingzhi");
+            player.markSkill('mingzhi');
+          } else {
+            delete player.storage.mingzhi;
+            player.unmarkSkill('mingzhi');
+          }
+          event.result.bool = true;
+          event.result.cards = event.cards;
+        }
+
+        lib.element.content.chooseRemoveMingzhiCard = function () {
+          "step 0"
+          if (!player.storage.mingzhi || !player.storage.mingzhi.length) {
+            event.finish();
+            return;
+          }
+          var next = player.choosePlayerCard(event.target, event.selectButton,
+            event.forced, event.prompt, 'h', event.ai);
+          next.set("filterButton", event.filterButton);
+          "step 1"
+          if (result && result.bool && result.links) {
+            player.removeMingzhiCard(result.links);
+          }
+
+          result.cards = result.links;
+          event._result = result;
+        }
+
+        lib.filter.filterMingzhiCard = function (player, card) {
+          return player.storage.mingzhi && player.storage.mingzhi.contains(card);
+        }
+
+        lib.element.player.countMingzhiCard = function () {
+          if (!this.storage.mingzhi) return 0;
+          return this.storage.mingzhi.length;
+        }
+
+        lib.element.player.getMingzhiCard = function () {
+          var getCards = [];
+          if (this.storage.mingzhi && this.storage.mingzhi.length) {
+            getCards = this.storage.mingzhi.concat();
+          }
+          return getCards;
+        }
+
+        lib.element.player.mingzhiCard = function (cards, str) {
+          var next = game.createEvent('mingzhiCard');
+          next.player = this;
+          next.str = str;
+
+          if (typeof cards == 'string') {
+            str = cards;
+            cards = next.str;
+            next.str = str;
+          }
+
+          if (get.itemtype(cards) == 'card') next.cards = [cards];
+          else if (get.itemtype(cards) == 'cards') next.cards = cards;
+
+          var mingzhiCards = this.getMingzhiCard();
+          for (var i = next.cards.length - 1; i >= 0; i--) {
+            if (mingzhiCards.contains(next.cards[i])) {
+              next.cards.splice(i, 1);
+            }
+          }
+
+          next.setContent('mingzhiCard');
+          if (!Array.isArray(next.cards) || !next.cards.length) {
+            _status.event.next.remove(next);
+          }
+          next._args = Array.from(arguments);
+          return next;
+        }
+
+        lib.element.player.chooseCardToMingzhi = function () {
+          var next = game.createEvent('chooseCardToMingzhi');
+          next.player = this;
+          for (var i = 0; i < arguments.length; i++) {
+            if (get.itemtype(arguments[i]) == 'player') {
+              next.target = arguments[i];
+            }
+            else if (typeof arguments[i] == 'number') {
+              next.selectCard = [arguments[i], arguments[i]];
+            }
+            else if (get.itemtype(arguments[i]) == 'select') {
+              next.selectCard = arguments[i];
+            }
+            else if (typeof arguments[i] == 'boolean') {
+              next.forced = arguments[i];
+            }
+            else if (typeof arguments[i] == 'function') {
+              next.ai = arguments[i];
+            }
+            else if (typeof arguments[i] == 'string') {
+              if (next.prompt) {
+                next.str = arguments[i];
+              } else {
+                next.prompt = arguments[i];
+              }
+            }
+          }
+          next.filterCard = function (card, player) {
+            return !lib.filter.filterMingzhiCard(player, card);
+          };
+          if (next.target == undefined) next.target = this;
+          if (next.selectCard == undefined) next.selectCard = [1, 1];
+          if (next.ai == undefined) next.ai = function (card) {
+            if (_status.event.att) {
+              return 11 - get.value(card);
+            }
+            return 0;
+          };
+          next.setContent('chooseCardToMingzhi');
+          next._args = Array.from(arguments);
+          if (next.player.countCards('h') == next.player.countMingzhiCard()) {
+            _status.event.next.remove(next);
+          }
+          return next;
+        }
+
+        lib.element.player.chooseMingzhiCard = function () {
+          var next = game.createEvent('chooseMingzhiCard');
+          next.player = this;
+          for (var i = 0; i < arguments.length; i++) {
+            if (get.itemtype(arguments[i]) == 'player') {
+              next.target = arguments[i];
+            }
+            else if (typeof arguments[i] == 'number') {
+              next.selectButton = [arguments[i], arguments[i]];
+            }
+            else if (get.itemtype(arguments[i]) == 'select') {
+              next.selectButton = arguments[i];
+            }
+            else if (typeof arguments[i] == 'boolean') {
+              next.forced = arguments[i];
+            }
+            else if (typeof arguments[i] == 'function') {
+              next.ai = arguments[i];
+            }
+            else if (typeof arguments[i] == 'string') {
+              if (next.prompt) {
+                next.str = arguments[i];
+              } else {
+                next.prompt = arguments[i];
+              }
+            }
+          }
+          next.filterButton = function (button, player) {
+            return !lib.filter.filterMingzhiCard(player, button.link);
+          };
+          if (next.target == undefined) next.target = this;
+          if (next.selectButton == undefined) next.selectButton = [1, 1];
+          if (next.ai == undefined) next.ai = function (button) {
+            var val = get.buttonValue(button);
+            if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
+            return val;
+          };
+          next.setContent('chooseMingzhiCard');
+          next._args = Array.from(arguments);
+          if (next.player.countCards('h', function (card) {
+            return !lib.filter.filterMingzhiCard(next.player, card);
+          })) {
+            _status.event.next.remove(next);
+          }
+          return next;
+        }
+
+        lib.element.player.removeMingzhiCard = function (cards) {
+          var next = game.createEvent('removeMingzhiCard');
+          next.player = this;
+          if (get.itemtype(cards) == 'card') next.cards = [cards];
+          else if (get.itemtype(cards) == 'cards') next.cards = cards;
+
+          let mingzhiCards = this.getMingzhiCard();
+          for (let i = next.cards.length - 1; i >= 0; i--) {
+            const element = next.cards[i];
+            if (!mingzhiCards.contains(element)) {
+              next.cards.splice(i, 1);
+            }
+          }
+          next.setContent('removeMingzhiCard');
+          if (!Array.isArray(next.cards) || !next.cards.length) {
+            _status.event.next.remove(next);
+          }
+          next._args = Array.from(arguments);
+          return next;
+        }
+
+        lib.element.player.chooseRemoveMingzhiCard = function () {
+          var next = game.createEvent('chooseRemoveMingzhiCard');
+          next.player = this;
+          for (var i = 0; i < arguments.length; i++) {
+            if (get.itemtype(arguments[i]) == 'player') {
+              next.target = arguments[i];
+            }
+            else if (typeof arguments[i] == 'number') {
+              next.selectButton = [arguments[i], arguments[i]];
+            }
+            else if (get.itemtype(arguments[i]) == 'select') {
+              next.selectButton = arguments[i];
+            }
+            else if (typeof arguments[i] == 'boolean') {
+              next.forced = arguments[i];
+            }
+            else if (typeof arguments[i] == 'function') {
+              if (next.ai) next.filterButton = arguments[i];
+              else next.ai = arguments[i];
+            }
+            else if (typeof arguments[i] == 'object' && arguments[i]) {
+              next.filterButton = function (button, player) {
+                return get.filter(arguments[i])(button.link);
+              };
+            }
+            else if (typeof arguments[i] == 'string') {
+              next.prompt = arguments[i];
+            }
+          }
+          if (next.filterButton == undefined) next.filterButton = lib.filter.all;
+
+          next.filterButton = function (button, player) {
+            const func = next.filterButton;
+            return lib.filter.filterMingzhiCard(player, button.link)
+              && func(button, player);
+          }
+          if (next.target == undefined) next.target = this;
+          if (next.selectButton == undefined) next.selectButton = [1, 1];
+          if (next.ai == undefined) next.ai = function (button) {
+            var val = get.buttonValue(button);
+            if (get.attitude(_status.event.player, get.owner(button.link)) > 0) return -val;
+            return val;
+          };
+          next.setContent('chooseRemoveMingzhiCard');
+          next._args = Array.from(arguments);
+          if (next.player.countCards('h', function (card) {
+            return lib.filter.filterMingzhiCard(next.player, card);
+          })) {
+            _status.event.next.remove(next);
+          }
+          return next;
+        }
+
+        lib.skill._loseMingzhi = {
+          trigger: {
+            global: "loseEnd"
+          },
+          forced: true,
+          priority: 101,
+          popup: false,
+          forceDie: true,
+          filter: function (event, player) {
+            if (player.storage.mingzhi && player.storage.mingzhi.length) {
+              return true;
+            }
+          },
+          content: function () {
+            event.cards = trigger.cards;
+            let mingzhiCard = [];
+            for (var i = 0; i < event.cards.length; i++) {
+              if (player.storage.mingzhi && player.storage.mingzhi.contains(event.cards[i])) {
+                if (player.storage.mingzhi.length == 1) {
+                  delete player.storage.mingzhi;
+                  player.unmarkSkill('mingzhi');
+                } else {
+                  player.storage.mingzhi.remove(event.cards[i]);
+                  player.syncStorage('mingzhi');
+                }
+                mingzhiCard.push(event.cards[i]);
+              }
+            }
+            event.oCards = mingzhiCard;
+            if (event.oCards.length) {
+              event.source = trigger.player;
+              event.trigger("loseMingzhi");
+            }
+          },
+        };
+
+        //#endregion
+
+        lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie
+
         game.导入character = function (英文名, 翻译名, obj, 扩展包名) { var oobj = get.copy(obj); oobj.name = 英文名; oobj.character = obj.character.character; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.character.translate, obj.skill.translate); game.import('character', function () { if (lib.device || lib.node) { for (var i in oobj.character) { oobj.character[i][4].push('ext:' + 扩展包名 + '/' + i + '.jpg'); } } else { for (var i in oobj.character) { oobj.character[i][4].push('db:extension-' + 扩展包名 + ':' + i + '.jpg'); } } return oobj; }); lib.config.all.characters.push(英文名); if (!lib.config.characters.contains(英文名)) { lib.config.characters.push(英文名); } lib.translate[英文名 + '_character_config'] = 翻译名; };
         game.导入card = function (英文名, 翻译名, obj) { var oobj = get.copy(obj); oobj.list = obj.card.list; oobj.card = obj.card.card; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.card.translate, obj.skill.translate); game.import('card', function () { return oobj }); lib.config.all.cards.push(英文名); if (!lib.config.cards.contains(英文名)) lib.config.cards.push(英文名); lib.translate[英文名 + '_card_config'] = 翻译名; };
         game.新增势力 = function (名字, 映射, 渐变) { var n, t; if (!名字) return; if (typeof 名字 == "string") { n = 名字; t = 名字 } else if (Array.isArray(名字) && 名字.length == 2 && typeof 名字[0] == "string") { n = 名字[0]; t = 名字[1] } else return; if (!映射 || !Array.isArray(映射) || 映射.length != 3) 映射 = [199, 21, 133]; var y = "(" + 映射[0] + "," + 映射[1] + "," + 映射[2]; var y1 = y + ",1)", y2 = y + ")"; var s = document.createElement('style'); var l; l = ".player .identity[data-color='diy" + n + "'],"; l += "div[data-nature='diy" + n + "'],"; l += "span[data-nature='diy" + n + "'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 10px,rgba" + y1 + " 0 0 10px}"; l += "div[data-nature='diy" + n + "m'],"; l += "span[data-nature='diy" + n + "m'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 5px,black 0 0 1px;}"; l += "div[data-nature='diy" + n + "mm'],"; l += "span[data-nature='diy" + n + "mm'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,black 0 0 1px;}"; s.innerHTML = l; document.head.appendChild(s); if (渐变 && Array.isArray(渐变) && Array.isArray(渐变[0]) && 渐变[0].length == 3) { var str = "", st2 = []; for (var i = 0; i < 渐变.length; i++) { str += ",rgb(" + 渐变[i][0] + "," + 渐变[i][1] + "," + 渐变[i][2] + ")"; if (i < 2) st2[i] = "rgb(" + 渐变[i][0] + "," + 渐变[i][1] + "," + 渐变[i][2] + ")"; } var tenUi = document.createElement('style'); tenUi.innerHTML = ".player>.camp-zone[data-camp='" + n + "']>.camp-back {background: linear-gradient(to bottom" + str + ");}"; tenUi.innerHTML += ".player>.camp-zone[data-camp='" + n + "']>.camp-name {text-shadow: 0 0 5px " + st2[0] + ", 0 0 10px " + st2[1] + ";}"; document.head.appendChild(tenUi); } lib.group.add(n); lib.translate[n] = t; lib.groupnature[n] = "diy" + n; };
@@ -988,8 +994,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     content: function () {
                       "step 0";
                       var cards = get.cards(3);
-                      if(cards.length == 0) event.goto(2);
-                      player.furrykillDiscoverCard('潜猎：发现一张牌', cards, true);
+                      if (cards.length == 0) event.goto(2);
+                      var next = player.furrykillDiscoverCard('潜猎：发现一张牌', cards, true);
+                      next.set("gotoOrdering", true);
                       "step 1";
                       var card = result.card;
                       player.gain(card, "draw");
@@ -1108,9 +1115,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.chooseToDiscard('he',
                     '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。',
                     [1, player.countCards('he')]).set('ai', function (card) {
-                    if (player.countCards('he') >= 6) return 32;
-                    return -1;// 势能的ai，暂时默认不弃牌
-                  });
+                      if (player.countCards('he') >= 6) return 32;
+                      return -1;// 势能的ai，暂时默认不弃牌
+                    });
                   'step 1'
                   event.totalCards = 0;
                   if (result.bool) {
@@ -2285,29 +2292,40 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 forced: true,
                 trigger: {
                   global: [
-                    "loseToDiscardpileAfter",
-                    //"cardsDiscardAfter",
+                    "cardsDiscardAfter",
                     "loseAfter",
-                    "judgeEnd",
                   ],
                 },
                 filter: function (event, player) {
-                  console.log(event.getParent().name);
+                  console.log('eventName:' + event.name)
+                  console.log('parentName:' + event.getParent().name);
                   console.log(event);
+
                   var parentName = event.getParent().name;
-                  if(event.name == 'judge' && get.position(event.orderingCards[0]) == 'd') return true;
-                  if(event.card && get.position(event.card) != 'd') return false;
-                  if(event.cards && get.position(event.cards[0]) != 'd') return false;
+
+                  if (event.card && get.position(event.card, true) != 'd') return false;
+                  if (event.cards && get.position(event.cards[0], true) != 'd') return false;
+
                   var lingshi = event.getParent('furrykill_lingshi');
                   if (lingshi && lingshi.name == "furrykill_lingshi") return false;
 
-                  if (event.name == 'lose'
-                    &&  (parentName == 'useCard'
+                  if (event.name == 'cardsDiscard' && parentName == 'orderingDiscard') {
+                    var p = event.getParent();
+                    if (p.card && get.position(p.card, true) != 'd') return false;
+                    if (p.cards && get.position(p.cards[0], true) != 'd') return false;
+                    if (p.relatedEvent
+                      && (p.relatedEvent.name == 'useCard'
+                        || p.relatedEvent.name == 'discard'
+                      )) {
+                      return false;
+                    }
+                  } else if (event.name == 'lose'
+                    && (parentName == 'useCard'
                       || parentName == 'discard'
                     )) {
                     return false;
                   }
-                  console.log(parentName);
+
                   if (event.result && event.result.bool != null) {
                     return event.result.bool;
                   }
@@ -2329,8 +2347,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (trigger.orderingCards) {
                     cards = cards.concat(trigger.orderingCards);
                   }
-                  console.log(trigger)
-                  console.log(cards);
                   player.addToExpansion(cards, 'gain2', 'log').gaintag.add('furrykill_xunzhou');
                 },
                 onremove: function (player, skill) {
@@ -2361,9 +2377,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (result.control == "从牌堆发现") {
                     event.goto(4);
                   } else {
-                    var cards=player.getExpansions('furrykill_xunzhou');
-                    if(cards.length > 3) cards = cards.slice(0, 3);
-                    player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
+                    var cards = player.getExpansions('furrykill_xunzhou');
+                    if (cards.length > 3) cards = cards.slice(0, 3);
+                    var next = player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
                   }
                   'step 2';
                   var card = result.card;
@@ -2373,8 +2389,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   event.finish();
                   'step 4';
                   var cards = get.cards(3);
-                  if(cards.length == 0) event.finish();
-                  player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
+                  if (cards.length == 0) event.finish();
+                  var next = player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
+                  next.set("gotoOrdering", true);
                   "step 5";
                   var card = result.card;
                   player.gain(card, "draw");
@@ -2493,7 +2510,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.7",
+      version: "1.9.115.2.8",
     },
   }
 })
