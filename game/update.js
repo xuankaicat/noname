@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.115.2.11',
+	version:'1.9.115.2.12',
 	update:'1.9.115.2',
 	changeLog:[
 		'李密入选稿公布',
@@ -9,10 +9,9 @@ window.noname_update={
 		'技能调整与bug修复',
 		'furrykill:',
 		'SP勇士',
-		'清羽不能再捡小巴灵风没选的牌了',
-		'清羽从挚中的发现改为随机发现',
 		'更新SP勇士技能描述',
-		'修复SP勇士去法的bug'
+		'修复SP勇士去法的bug',
+		'优化郡览ai'
 	],
 	files:[
 		'extension/FurryKill/extension.js',

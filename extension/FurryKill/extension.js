@@ -2489,13 +2489,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       }
                     },
                     ai: {
-                      order: 2,
+                      order: 10,
                       threaten: 1.5,
                       result: {
                         player: function (player, target) {
                           var target = game.findPlayer(function (current) {
                             return current.hasSkill('furrykill_junlan');
                           });
+                          if (player.hp == 1) return -10;
                           if (target) {
                             return get.attitude(player, target);
                           }
@@ -2527,7 +2528,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   return ui.selected.cards.length;
                 },
                 filterTarget:function(card,player,target){
-                  return true;
+                  return !target.isHealthy();
                 },
                 position: 'he',
                 filterCard: true,
@@ -2657,7 +2658,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.11",
+      version: "1.9.115.2.12",
     },
   }
 })
