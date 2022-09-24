@@ -2428,11 +2428,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_junlan: {
-                trigger: { player: "phaseUseBegin" },
-                frequent: true,
-                content: function () {
-                  player.draw(2);
-                },
                 global: 'furrykill_junlan_global',
                 subSkill: {
                   global: {
@@ -2440,7 +2435,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     direct: true,
                     delay: false,
                     filter: function (event, player) {
-                      return !player.hasSkill('furrykill_junlan_used') && !player.hasSkill('furrykill_junlan');
+                      return !player.hasSkill('furrykill_junlan_used');
                     },
                     content: function () {
                       "step 0";
@@ -2477,12 +2472,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
                         player.loseHp();
                         event.target.draw(2);
+
+                        if(player == event.target) {
+                          event.finish();
+                        }
                       }
                       else {
                         event.finish();
                       }
                       "step 3";
-                      event.target.chooseCard('he', 2, true, '郡览：将两张牌交给' + get.translation(player));
+                      event.target.chooseCard('he', [1, 2], true, '郡览：将一至两张牌交给' + get.translation(player));
                       "step 4";
                       if (result.bool) {
                         event.target.give(result.cards, player, true);
@@ -2642,7 +2641,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_lingshi_info: "锁定技，一名角色的回合结束后，若【挚】中的牌数量为10的倍数，你将所有【挚】置入弃牌堆，并进行一个额外的回合。",
               furrykill_junlan: "郡览",
               furrykill_junlan_global: "郡览",
-              furrykill_junlan_info: "出牌阶段开始时，你可以摸两张牌。其他角色的出牌阶段开始时，其可以失去一点体力，令你摸两张牌，然后你交给其两张牌。",
+              furrykill_junlan_info: "每名角色的出牌阶段限一次，其可以失去一点体力，令你摸两张牌，然后你交给其一至两张牌。",
               furrykill_qufa: "去法",
               furrykill_qufa_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
             },
@@ -2658,7 +2657,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.12",
+      version: "1.9.115.2.13",
     },
   }
 })
