@@ -640,7 +640,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 "male",
                 "furrykill_cat",
                 3,
-                ["furrykill_junlan", "furrykill_qufa"],
+                ["furrykill_wuzhu", "furrykill_qunchong"],
                 [],
               ],
             },
@@ -1125,9 +1125,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.chooseToDiscard('he',
                     '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。',
                     [1, player.countCards('he')]).set('ai', function (card) {
-                      if (player.countCards('he') >= 6) return 32;
-                      return -1;// 势能的ai，暂时默认不弃牌
-                    });
+                    if (player.countCards('he') >= 6) return 32;
+                    return -1;// 势能的ai，暂时默认不弃牌
+                  });
                   'step 1'
                   event.totalCards = 0;
                   if (result.bool) {
@@ -2307,10 +2307,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   ],
                 },
                 filter: function (event, player) {
-                  console.log('eventName:' + event.name)
-                  console.log('parentName:' + event.getParent().name);
-                  console.log(event);
-
                   var parentName = event.getParent().name;
 
                   if (event.card && get.position(event.card, true) != 'd') return false;
@@ -2427,27 +2423,27 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 }
               },
 
-              furrykill_junlan: {
-                global: 'furrykill_junlan_global',
+              furrykill_wuzhu: {
+                global: 'furrykill_wuzhu_global',
                 subSkill: {
                   global: {
                     enable: "phaseUse",
                     direct: true,
                     delay: false,
                     filter: function (event, player) {
-                      return !player.hasSkill('furrykill_junlan_used');
+                      return !player.hasSkill('furrykill_wuzhu_used');
                     },
                     content: function () {
                       "step 0";
                       var targets = game.filterPlayer(function (current) {
-                        return current.hasSkill('furrykill_junlan');
+                        return current.hasSkill('furrykill_wuzhu');
                       });
                       if (targets.length == 1) {
                         event.target = targets[0];
                         event.goto(2);
                       }
                       else if (targets.length > 0) {
-                        player.chooseTarget(true, '选择【郡览】的目标', function (card, player, target) {
+                        player.chooseTarget(true, '选择【乌珠】的目标', function (card, player, target) {
                           return _status.event.list.contains(target);
                         }).set('list', targets).set('ai', function (target) {
                           var player = _status.event.player;
@@ -2466,8 +2462,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       }
                       "step 2";
                       if (event.target) {
-                        player.logSkill('furrykill_junlan', event.target);
-                        player.addTempSkill('furrykill_junlan_used', 'phaseUseEnd');
+                        player.logSkill('furrykill_wuzhu', event.target);
+                        player.addTempSkill('furrykill_wuzhu_used', 'phaseUseEnd');
                         event.card = cards[0];
 
                         player.loseHp();
@@ -2481,7 +2477,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         event.finish();
                       }
                       "step 3";
-                      event.target.chooseCard('he', [1, 2], true, '郡览：将一至两张牌交给' + get.translation(player));
+                      event.target.chooseCard('he', [1, 2], true, '乌珠：将一至两张牌交给' + get.translation(player));
                       "step 4";
                       if (result.bool) {
                         event.target.give(result.cards, player, true);
@@ -2493,7 +2489,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       result: {
                         player: function (player, target) {
                           var target = game.findPlayer(function (current) {
-                            return current.hasSkill('furrykill_junlan');
+                            return current.hasSkill('furrykill_wuzhu');
                           });
                           if (player.hp == 1) return -10;
                           if (target) {
@@ -2511,9 +2507,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
-              furrykill_qufa: {
+              furrykill_qunchong: {
                 init: function (player) {
-                  player.storage.furrykill_qufa = 0;
+                  player.storage.furrykill_qunchong = 0;
                 },
                 enable: 'phaseUse',
                 usable: 1,
@@ -2532,11 +2528,15 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 position: 'he',
                 filterCard: true,
                 content: function () {
-                  if (!player.hasSkill('furrykill_qufa_used') && targets.length != player.getHandcardLimit()) {
-                    player.storage.furrykill_qufa++;
-                    player.addTempSkill('furrykill_qufa_used');
-                    player.markSkill('furrykill_qufa');
+                  'step 0';
+                  if (!player.hasSkill('furrykill_qunchong_used')) {
+                    player.addTempSkill('furrykill_qunchong_used');
+                    if(targets.length != player.getHandcardLimit()) {
+                      player.storage.furrykill_qunchong++;
+                      player.markSkill('furrykill_qunchong');
+                    }
                   }
+                  'step 1';
                   target.recover();
                 },
                 intro:{
@@ -2544,7 +2544,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 mod: {
                   maxHandcard: function (player, num) {
-                    return num - player.storage.furrykill_qufa;
+                    return num - player.storage.furrykill_qunchong;
                   }
                 },
                 subSkill: {
@@ -2639,11 +2639,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_tansu_info: "出牌阶段限一次，你可以从牌堆或【挚】中发现一张牌。",
               furrykill_lingshi: "零时",
               furrykill_lingshi_info: "锁定技，一名角色的回合结束后，若【挚】中的牌数量为10的倍数，你将所有【挚】置入弃牌堆，并进行一个额外的回合。",
-              furrykill_junlan: "郡览",
-              furrykill_junlan_global: "郡览",
-              furrykill_junlan_info: "每名角色的出牌阶段限一次，其可以失去一点体力，令你摸两张牌，然后你交给其一至两张牌。",
-              furrykill_qufa: "去法",
-              furrykill_qufa_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
+              furrykill_wuzhu: "乌珠",
+              furrykill_wuzhu_global: "乌珠",
+              furrykill_wuzhu_info: "每名角色的出牌阶段限一次，其可以失去一点体力，令你摸两张牌，然后你交给其一至两张牌。",
+              furrykill_qunchong: "群宠",
+              furrykill_qunchong_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
             },
           },
         }, "FurryKill");
@@ -2657,7 +2657,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.13",
+      version: "1.9.115.2.14",
     },
   }
 })
