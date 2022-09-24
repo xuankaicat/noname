@@ -2657,7 +2657,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.10",
+      version: "1.9.115.2.11",
     },
   }
 })
