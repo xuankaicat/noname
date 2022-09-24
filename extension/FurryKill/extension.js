@@ -2532,12 +2532,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 position: 'he',
                 filterCard: true,
                 content: function () {
-                  target.recover();
                   if (!player.hasSkill('furrykill_qufa_used') && targets.length != player.getHandcardLimit()) {
                     player.storage.furrykill_qufa++;
                     player.addTempSkill('furrykill_qufa_used');
                     player.markSkill('furrykill_qufa');
                   }
+                  target.recover();
                 },
                 intro:{
                   content:'手牌上限-#',
@@ -2641,9 +2641,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_lingshi_info: "锁定技，一名角色的回合结束后，若【挚】中的牌数量为10的倍数，你将所有【挚】置入弃牌堆，并进行一个额外的回合。",
               furrykill_junlan: "郡览",
               furrykill_junlan_global: "郡览",
-              furrykill_junlan_info: "出牌阶段开始时，你可以令一名拥有郡览的角色摸两张牌，若该角色不为你，则该角色将两张牌交给你。其他角色的出牌阶段限一次，其可以失去一点体力发动郡览。",
+              furrykill_junlan_info: "出牌阶段开始时，你可以摸两张牌。其他角色的出牌阶段开始时，其可以失去一点体力，令你摸两张牌，然后你交给其两张牌。",
               furrykill_qufa: "去法",
-              furrykill_qufa_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择弃置任意张牌并令等量的角色回复一点体力，若这些角色数与你的手牌上限不等，你的手牌上限-1。",
+              furrykill_qufa_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
             },
           },
         }, "FurryKill");
