@@ -513,7 +513,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
         //#endregion
 
-        lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie
+        lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie;
+
+        lib.characterReplace["furrykill_yongshi"] = ["furrykill_yongshi", "sp_furrykill_yongshi"];
 
         game.导入character = function (英文名, 翻译名, obj, 扩展包名) { var oobj = get.copy(obj); oobj.name = 英文名; oobj.character = obj.character.character; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.character.translate, obj.skill.translate); game.import('character', function () { if (lib.device || lib.node) { for (var i in oobj.character) { oobj.character[i][4].push('ext:' + 扩展包名 + '/' + i + '.jpg'); } } else { for (var i in oobj.character) { oobj.character[i][4].push('db:extension-' + 扩展包名 + ':' + i + '.jpg'); } } return oobj; }); lib.config.all.characters.push(英文名); if (!lib.config.characters.contains(英文名)) { lib.config.characters.push(英文名); } lib.translate[英文名 + '_character_config'] = 翻译名; };
         game.导入card = function (英文名, 翻译名, obj) { var oobj = get.copy(obj); oobj.list = obj.card.list; oobj.card = obj.card.card; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.card.translate, obj.skill.translate); game.import('card', function () { return oobj }); lib.config.all.cards.push(英文名); if (!lib.config.cards.contains(英文名)) lib.config.cards.push(英文名); lib.translate[英文名 + '_card_config'] = 翻译名; };
@@ -634,6 +636,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_xunzhou", "furrykill_tansu", "furrykill_lingshi"],
                 ["des:静时者"],
               ],
+              sp_furrykill_yongshi: [
+                "male",
+                "furrykill_cat",
+                3,
+                ["furrykill_junlan", "furrykill_qufa"],
+                [],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -651,6 +660,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_qinhan: "倾寒",
               furrykill_lanyuan: "岚渊",
               furrykill_qingyu: "清羽",
+              sp_furrykill_yongshi: "SP勇士",
             },
           },
           characterTitle: {
@@ -1214,7 +1224,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   }
                   "step 2"
                   if (result.bool) {
-                    game.cardsGotoOrdering(event.cards);
+                    //game.cardsGotoOrdering(event.cards);
                     event.videoId = lib.status.videoId++;
                     event.time = get.utc();
 
@@ -2320,7 +2330,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       return false;
                     }
                     //ol暴虐官方实现太拉了，做个特判
-                    if (p.getParent().name == 'olbaolue'&& get.suit(event.cards[0]) == 'spade') {
+                    if (p.getParent().name == 'olbaolue' && get.suit(event.cards[0]) == 'spade') {
                       return false;
                     }
                   } else if (event.name == 'lose'
@@ -2382,7 +2392,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     event.goto(4);
                   } else {
                     var cards = player.getExpansions('furrykill_xunzhou');
-                    if (cards.length > 3) cards = cards.slice(0, 3);
+                    if (cards.length > 3) cards = cards.randomGets(3)
                     var next = player.furrykillDiscoverCard('探溯：发现一张牌', cards, true);
                   }
                   'step 2';
@@ -2415,6 +2425,134 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.loseToDiscardpile(player.getExpansions('furrykill_xunzhou'));
                   player.insertPhase();
                 }
+              },
+
+              furrykill_junlan: {
+                trigger: { player: "phaseUseBegin" },
+                frequent: true,
+                content: function () {
+                  player.draw(2);
+                },
+                global: 'furrykill_junlan_global',
+                subSkill: {
+                  global: {
+                    enable: "phaseUse",
+                    direct: true,
+                    delay: false,
+                    filter: function (event, player) {
+                      return !player.hasSkill('furrykill_junlan_used') && !player.hasSkill('furrykill_junlan');
+                    },
+                    content: function () {
+                      "step 0";
+                      var targets = game.filterPlayer(function (current) {
+                        return current.hasSkill('furrykill_junlan');
+                      });
+                      if (targets.length == 1) {
+                        event.target = targets[0];
+                        event.goto(2);
+                      }
+                      else if (targets.length > 0) {
+                        player.chooseTarget(true, '选择【郡览】的目标', function (card, player, target) {
+                          return _status.event.list.contains(target);
+                        }).set('list', targets).set('ai', function (target) {
+                          var player = _status.event.player;
+                          return get.attitude(player, target);
+                        });
+                      }
+                      else {
+                        event.finish();
+                      }
+                      "step 1";
+                      if (result.bool && result.targets.length) {
+                        event.target = result.targets[0];
+                      }
+                      else {
+                        event.finish();
+                      }
+                      "step 2";
+                      if (event.target) {
+                        player.logSkill('furrykill_junlan', event.target);
+                        player.addTempSkill('furrykill_junlan_used', 'phaseUseEnd');
+                        event.card = cards[0];
+
+                        player.loseHp();
+                        event.target.draw(2);
+                      }
+                      else {
+                        event.finish();
+                      }
+                      "step 3";
+                      event.target.chooseCard('he', 2, true, '郡览：将两张牌交给' + get.translation(player));
+                      "step 4";
+                      if (result.bool) {
+                        event.target.give(result.cards, player, true);
+                      }
+                    },
+                    ai: {
+                      order: 2,
+                      threaten: 1.5,
+                      result: {
+                        player: function (player, target) {
+                          var target = game.findPlayer(function (current) {
+                            return current.hasSkill('furrykill_junlan');
+                          });
+                          if (target) {
+                            return get.attitude(player, target);
+                          }
+                        }
+                      }
+                    },
+                    sub: true,
+                  },
+                  used: {
+                    charlotte: true,
+                    sub: true,
+                  }
+                },
+              },
+
+              furrykill_qufa: {
+                init: function (player) {
+                  player.storage.furrykill_qufa = 0;
+                },
+                enable: 'phaseUse',
+                usable: 1,
+                filter: function (event, player) {
+                  return player.getHandcardLimit() > 0;
+                },
+                selectCard: function () {
+                  return [Math.max(1, ui.selected.targets.length), game.countPlayer()];
+                },
+                selectTarget: function () {
+                  return ui.selected.cards.length;
+                },
+                filterTarget:function(card,player,target){
+                  return true;
+                },
+                position: 'he',
+                filterCard: true,
+                content: function () {
+                  target.recover();
+                  if (!player.hasSkill('furrykill_qufa_used') && targets.length != player.getHandcardLimit()) {
+                    player.storage.furrykill_qufa++;
+                    player.addTempSkill('furrykill_qufa_used');
+                    player.markSkill('furrykill_qufa');
+                  }
+                },
+                intro:{
+                  content:'手牌上限-#',
+                },
+                mod: {
+                  maxHandcard: function (player, num) {
+                    return num - player.storage.furrykill_qufa;
+                  }
+                },
+                subSkill: {
+                  used: {
+                    charlotte: true,
+                    sub: true,
+                  }
+                },
               },
 
             },
@@ -2501,6 +2639,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_tansu_info: "出牌阶段限一次，你可以从牌堆或【挚】中发现一张牌。",
               furrykill_lingshi: "零时",
               furrykill_lingshi_info: "锁定技，一名角色的回合结束后，若【挚】中的牌数量为10的倍数，你将所有【挚】置入弃牌堆，并进行一个额外的回合。",
+              furrykill_junlan: "郡览",
+              furrykill_junlan_global: "郡览",
+              furrykill_junlan_info: "出牌阶段开始时，你可以令一名拥有郡览的角色摸两张牌，若该角色不为你，则该角色将两张牌交给你。其他角色的出牌阶段限一次，其可以失去一点体力发动郡览。",
+              furrykill_qufa: "去法",
+              furrykill_qufa_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择弃置任意张牌并令等量的角色回复一点体力，若这些角色数与你的手牌上限不等，你的手牌上限-1。",
             },
           },
         }, "FurryKill");
@@ -2514,7 +2657,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.9",
+      version: "1.9.115.2.10",
     },
   }
 })
