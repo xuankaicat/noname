@@ -2319,6 +2319,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       )) {
                       return false;
                     }
+                    //ol暴虐官方实现太拉了，做个特判
+                    if (p.getParent().name == 'olbaolue'&& get.suit(event.cards[0]) == 'spade') {
+                      return false;
+                    }
                   } else if (event.name == 'lose'
                     && (parentName == 'useCard'
                       || parentName == 'discard'
@@ -2333,7 +2337,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   var cards = [];
-                  if (trigger.cards2) {
+                  if (trigger.cards2 && trigger.cards2.length > 0) {
                     cards = cards.concat(trigger.cards2);
                   } else if (trigger.cards) {
                     cards = cards.concat(trigger.cards);
@@ -2510,7 +2514,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.8",
+      version: "1.9.115.2.9",
     },
   }
 })
