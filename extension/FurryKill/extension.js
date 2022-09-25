@@ -643,6 +643,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_wuzhu", "furrykill_qunchong"],
                 [],
               ],
+              furrykill_haohai: [
+                "male",
+                "furrykill_dragon",
+                4,
+                ["furrykill_yongdai"],
+                ["des:警长"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -661,6 +668,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_lanyuan: "岚渊",
               furrykill_qingyu: "清羽",
               sp_furrykill_yongshi: "SP勇士",
+              furrykill_haohai: "浩海",
             },
           },
           characterTitle: {
@@ -1125,9 +1133,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.chooseToDiscard('he',
                     '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。',
                     [1, player.countCards('he')]).set('ai', function (card) {
-                    if (player.countCards('he') >= 6) return 32;
-                    return -1;// 势能的ai，暂时默认不弃牌
-                  });
+                      if (player.countCards('he') >= 6) return 32;
+                      return -1;// 势能的ai，暂时默认不弃牌
+                    });
                   'step 1'
                   event.totalCards = 0;
                   if (result.bool) {
@@ -2469,7 +2477,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         player.loseHp();
                         event.target.draw(2);
 
-                        if(player == event.target) {
+                        if (player == event.target) {
                           event.finish();
                         }
                       }
@@ -2522,7 +2530,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 selectTarget: function () {
                   return ui.selected.cards.length;
                 },
-                filterTarget:function(card,player,target){
+                filterTarget: function (card, player, target) {
                   return !target.isHealthy();
                 },
                 position: 'he',
@@ -2531,7 +2539,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 0';
                   if (!player.hasSkill('furrykill_qunchong_used')) {
                     player.addTempSkill('furrykill_qunchong_used');
-                    if(targets.length != player.getHandcardLimit()) {
+                    if (targets.length != player.getHandcardLimit()) {
                       player.storage.furrykill_qunchong++;
                       player.markSkill('furrykill_qunchong');
                     }
@@ -2539,8 +2547,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 1';
                   target.recover();
                 },
-                intro:{
-                  content:'手牌上限-#',
+                intro: {
+                  content: '手牌上限-#',
                 },
                 mod: {
                   maxHandcard: function (player, num) {
@@ -2552,6 +2560,94 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     charlotte: true,
                     sub: true,
                   }
+                },
+              },
+
+              furrykill_yongdai: {
+                init: function (player) {
+                  player.storage.furrykill_yongdai_give = [];
+                  player.storage.furrykill_yongdai_ungive = [];
+                },
+                trigger: {
+                  player: "phaseUseBegin",
+                },
+                filter: function (event, player) {
+                  return player.countCards('h') > 0;
+                },
+                content: function () {
+                  'step 0';
+                  player.showHandcards();
+                  'step 1';
+                  player.chooseTarget("拥戴：指定至多三名其他角色，这些角色选择是否交给你一张牌。", [1, 3], function (card, player, target) {
+                    return player != target;
+                  }, function (target) {
+                    if (!_status.event.check) return 0;
+                    return get.attitude(_status.event.player, target);
+                  });
+                  'step 2';
+                  if (result.bool) {
+                    event.num = 0;
+                    event.targets = result.targets;
+                    player.addTempSkill('furrykill_yongdai_after');
+                  } else {
+                    event.finish();
+                  }
+                  'step 3';
+                  event.targets[event.num].chooseCard('he', 1, '拥戴：是否交给' + get.translation(player) + '一张牌?').ai = function (card) {
+                    if (get.attitude(event.targets[event.num], player) > 0) return 10 - get.value(card);
+                    return 2 - get.value(card);
+                  };
+                  'step 4';
+                  if (result.bool) {
+                    event.targets[event.num].give(result.cards, player, true);
+                    player.storage.furrykill_yongdai_give.add(event.targets[event.num]);
+                  } else {
+                    player.storage.furrykill_yongdai_ungive.add(event.targets[event.num]);
+                    game.log(event.targets[event.num], '选择不交给', player, '牌');
+                  }
+                  'step 5';
+                  event.num++;
+                  if (event.num != targets.length) event.goto(3);
+                },
+                subSkill: {
+                  after: {
+                    trigger: {
+                      player: "phaseUseAfter",
+                    },
+                    forced: true,
+                    charlotte: true,
+                    content: function () {
+                      "step 0";
+                      event.damaged = player.getStat('damage') > 0;
+                      event.num = 0;
+                      event.gives = player.storage.furrykill_yongdai_give;
+                      event.ungives = player.storage.furrykill_yongdai_ungive;
+                      if (event.gives.length == 0) event.goto(3);
+                      "step 1";
+                      if (event.damaged) {
+                        event.gives[event.num].draw();
+                      } else {
+                        event.gives[event.num].chooseToDiscard(true, 'he');
+                      }
+                      event.num++;
+                      if (event.num != event.gives.length) event.redo();
+                      "step 2";
+                      event.num = 0;
+                      if (event.ungives.length == 0) event.goto(4);
+                      "step 3";
+                      if (!event.damaged) {
+                        event.ungives[event.num].draw();
+                      } else {
+                        event.ungives[event.num].chooseToDiscard(true, 'he');
+                      }
+                      event.num++;
+                      if (event.num != event.ungives.length) event.redo();
+                      "step 4";
+                      player.storage.furrykill_yongdai_give = [];
+                      player.storage.furrykill_yongdai_ungive = [];
+                    },
+                    sub: true,
+                  },
                 },
               },
 
@@ -2644,6 +2740,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_wuzhu_info: "每名角色的出牌阶段限一次，其可以失去一点体力，令你摸两张牌，然后你交给其一至两张牌。",
               furrykill_qunchong: "群宠",
               furrykill_qunchong_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
+              furrykill_yongdai: "拥戴",
+              furrykill_yongdai_info: "出牌阶段开始时，你可以展示手牌，然后指定至多三名其他角色，这些角色选择是否交给你一张牌。然后出牌阶段结束时，若你于此阶段造成了伤害，选择交给你牌的角色摸一张牌，选择不交给你牌的角色弃一张牌；若你没有造成伤害，选择交给你牌的角色弃一张牌，选择不交给你牌的角色摸一张牌。",
             },
           },
         }, "FurryKill");
@@ -2657,7 +2755,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.14",
+      version: "1.9.115.2.15",
     },
   }
 })
