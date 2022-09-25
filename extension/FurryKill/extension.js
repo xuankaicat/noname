@@ -650,6 +650,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_yongdai"],
                 ["des:警长"],
               ],
+              furrykill_shasha: [
+                "male",
+                "furrykill_fox",
+                3,
+                ["furrykill_jiyin", "furrykill_liushui"],
+                ["des:南蛮入侵"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -669,6 +676,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_qingyu: "清羽",
               sp_furrykill_yongshi: "SP勇士",
               furrykill_haohai: "浩海",
+              furrykill_shasha: "杀杀",
             },
           },
           characterTitle: {
@@ -2651,6 +2659,117 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_jiyin: {
+                usable: 1,
+                trigger: {
+                  source: "damageSource",
+                },
+                frequent: true,
+                popup: false,
+                content: function () {
+                  'step 0';
+                  var list = ["令至多两名角色分别弃置一张牌", "令该角色攻击范围内的一名角色失去一点体力", "取消"];
+                  player.chooseControl().set('choiceList', list).set('ai', function () {
+                    return 0;
+                  });
+                  'step 1';
+                  if (result.index == 2) {
+                    event.finish();
+                  } else if (result.index == 0) {
+                    player.chooseTarget("激音：令至多两名角色分别弃置一张牌。", [1, 2], function (card, player, target) {
+                      return target.countCards('he') > 0;
+                    }, function (target) {
+                      if (!_status.event.check) return 0;
+                      return -get.attitude(player, target);
+                    });
+                  } else {
+                    event.goto(5);
+                  }
+                  'step 2';
+                  if (result.bool) {
+                    event.num = 0;
+                    event.targets = result.targets;
+                    player.logSkill('furrykill_jiyin');
+                  } else {
+                    event.goto(0);
+                  }
+                  'step 3';
+                  event.targets[event.num].chooseToDiscard("激音：弃一张牌。", 'he', true);
+                  'step 4';
+                  event.num++;
+                  if (event.num != targets.length) event.goto(3);
+                  else event.finish();
+                  'step 5';
+                  player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
+                    var source = trigger.player;
+                    return target != source && source.inRange(target);
+                  }).set('ai', function (target) {
+                    return get.damageEffect(target, player, player);
+                  });
+                  'step 6';
+                  if (result.bool && result.targets && result.targets.length) {
+                    player.logSkill('furrykill_jiyin');
+                    result.targets[0].loseHp();
+                  } else {
+                    event.goto(0);
+                  }
+                },
+              },
+
+              furrykill_liushui: {
+                usable: 1,
+                trigger: {
+                  player: "damageEnd",
+                },
+                frequent: true,
+                popup: false,
+                content: function () {
+                  'step 0';
+                  var list = ["令至多两名角色分别摸一张牌", "令攻击范围内的一名其他角色恢复一点体力", "取消"];
+                  player.chooseControl().set('choiceList', list).set('ai', function () {
+                    return 0;
+                  });
+                  'step 1';
+                  if (result.index == 2) {
+                    event.finish();
+                  } else if (result.index == 0) {
+                    player.chooseTarget("流水：令至多两名角色分别摸一张牌。", [1, 2], function (card, player, target) {
+                      return true;
+                    }, function (target) {
+                      if (!_status.event.check) return 0;
+                      return get.attitude(player, target);
+                    });
+                  } else {
+                    event.goto(3);
+                  }
+                  'step 2';
+                  if (result.bool) {
+                    game.asyncDraw(result.targets);
+                    player.logSkill('furrykill_liushui');
+                    event.finish();
+                  } else {
+                    event.goto(0);
+                  }
+                  'step 3';
+                  player.chooseTarget("流水：令攻击范围内的一名其他角色恢复一点体力。", function (card, player, target) {
+                    return target != player && player.inRange(target);
+                  }).set('ai', function (target) {
+                    if (target == player) {
+                      if (player.hp == 1) return 5;
+                      else return 2;
+                    }
+                    return get.attitude(player, target);
+                  });
+                  'step 4';
+                  if (result.bool && result.targets && result.targets.length) {
+                    player.logSkill('furrykill_liushui');
+                    result.targets[0].recover();
+                  } else {
+                    event.goto(0);
+                  }
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -2742,6 +2861,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_qunchong_info: "出牌阶段限一次，若你的手牌上限不为0，你可以选择任意名已受伤角色并弃置等量张牌，令这些角色恢复一点体力（若选择的角色数与你的手牌上限不等，你的手牌上限-1）。",
               furrykill_yongdai: "拥戴",
               furrykill_yongdai_info: "出牌阶段开始时，你可以展示手牌，然后指定至多三名其他角色，这些角色选择是否交给你一张牌。然后出牌阶段结束时，若你于此阶段造成了伤害，选择交给你牌的角色摸一张牌，选择不交给你牌的角色弃一张牌；若你没有造成伤害，选择交给你牌的角色弃一张牌，选择不交给你牌的角色摸一张牌。",
+              furrykill_jiyin: "激音",
+              furrykill_jiyin_info: "每回合限一次，你造成伤害后，可以选择一项：1、令至多两名角色分别弃置一张牌；2、令该角色攻击范围内的一名角色失去一点体力。",
+              furrykill_liushui: "流水",
+              furrykill_liushui_info: "每回合限一次，你受到伤害后，可以选择一项：1、令至多两名角色分别摸一张牌；2、令攻击范围内的一名其他角色恢复一点体力。",
             },
           },
         }, "FurryKill");
@@ -2755,7 +2878,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.15",
+      version: "1.9.115.2.16",
     },
   }
 })
