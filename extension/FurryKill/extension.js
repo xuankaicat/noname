@@ -703,13 +703,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   trigger.cancel();
                 },
                 ai: {
-                  threaten: 0,
                   result: {
-                    player: function (player) {
-                      return -1;
-                    },
+                    player: -1
                   },
-                  order: 4,
                 },
               },
 
@@ -920,7 +916,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw();
                 },
                 ai: {
-                  order: 10,
+                  order: 7,
                   result: {
                     player: function (player, target) {
                       return -get.attitude(player, target);
@@ -1478,7 +1474,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   result: {
                     player: function (player, target) {
                       if (get.attitude(player, target) > 0) return -1;
-                      if (target.countCards('h') >= 4) return 1;
+                      if (target.countCards('h') >= 4) return -get.attitude(player, target);
                       return -1;
                     },
                   },
@@ -2804,7 +2800,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.chooseTarget("激音：令至多两名角色分别弃置一张牌。", [1, 2], function (card, player, target) {
                       return target.countCards('he') > 0;
                     }, function (target) {
-                      if (!_status.event.check) return 0;
                       return -get.attitude(player, target);
                     });
                   } else {
@@ -2872,7 +2867,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.chooseTarget("流水：令至多两名角色分别摸一张牌。", [1, 2], function (card, player, target) {
                       return true;
                     }, function (target) {
-                      if (!_status.event.check) return 0;
+                      if(player == target) return 10;
                       return get.attitude(player, target);
                     });
                   } else {
@@ -3025,7 +3020,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.17",
+      version: "1.9.115.2.18",
     },
   }
 })
