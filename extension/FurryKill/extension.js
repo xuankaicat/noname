@@ -702,6 +702,15 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   game.log(trigger.player, '已吟唱');
                   trigger.cancel();
                 },
+                ai: {
+                  threaten: 0,
+                  result: {
+                    player: function (player) {
+                      return -1;
+                    },
+                  },
+                  order: 4,
+                },
               },
 
               furrykill_dingchen: {
@@ -764,33 +773,43 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_xiaoshi: {
-                group: ["furrykill_xiaoshi_1", "furrykill_xiaoshi_damaged"],
-                subSkill: {
-                  1: {
-                    trigger: {
-                      global: "phaseZhunbeiBegin",
+                trigger: {
+                  global: "phaseZhunbeiBegin",
+                },
+                filter: function (event, player) {
+                  return player != event.player;
+                },
+                round: 1,
+                content: function () {
+                  "step 0";
+                  player.storage.furrykill_xiaoshi_sign = true
+                  event.card = { name: 'sha', isCard: true };
+                  event.related = player.useCard(event.card, trigger.player);
+                  "step 1";
+                  if (!event.related || !game.hasPlayer2(function (current) {
+                    return current.getHistory('damage', function (evt) {
+                      return evt.getParent(2) == event.related;
+                    }).length > 0;
+                  })) {
+                    player.storage.furrykill_xiaoshi_sign = undefined;
+                    player.turnOver();
+                  }
+                },
+                ai: {
+                  threaten: 3,
+                  result: {
+                    player: function (player, target) {
+                      var isFriend = get.attitude(player, target) > 0
+                      if (isFriend) return -1;
+                      if (target.countCards('h') >= 4) return -1;
+                      return get.effect(target, { name: 'sha' }, player, player);
                     },
-                    filter: function (event, player) {
-                      return player != event.player;
-                    },
-                    round: 1,
-                    content: function () {
-                      "step 0";
-                      player.storage.xiaoshi = true
-                      event.card = { name: 'sha', isCard: true };
-                      event.related = player.useCard(event.card, trigger.player);
-                      "step 1";
-                      if (!event.related || !game.hasPlayer2(function (current) {
-                        return current.getHistory('damage', function (evt) {
-                          return evt.getParent(2) == event.related;
-                        }).length > 0;
-                      })) {
-                        player.storage.xiaoshi = undefined;
-                        player.turnOver();
-                      }
-                    },
-                    sub: true,
                   },
+                  order: 4,
+                  expose: 0.4,
+                },
+                group: ["furrykill_xiaoshi_damaged"],
+                subSkill: {
                   damaged: {
                     trigger: {
                       source: "damageAfter",
@@ -798,10 +817,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     forced: true,
                     popup: false,
                     filter: function (event, player) {
-                      return player.storage.xiaoshi;
+                      return player.storage.furrykill_xiaoshi_sign;
                     },
                     content: function () {
-                      player.storage.xiaoshi = undefined;
+                      player.storage.furrykill_xiaoshi_sign = undefined;
                       var target = trigger.player;
                       if (target.isDead() || !target.countCards('he')) return;
                       player.discardPlayerCard(target, true, 'he');
@@ -825,11 +844,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   trigger.cancel();
                 },
                 ai: {
-                  threaten: 1,
+                  threaten: 2,
                   result: {
-                    target: function (player, target) {
-                      if (player.hp > 1) return 3.5;
-                      return 2;
+                    player: function (card, player, target) {
+                      if (player.hp == 1) return -1;
+                      var isFriend = get.attitude(player, target) > 0
+                      if (isFriend) return 4 - get.effect(target, card, player, _status.event.player);
+                      return -6 + get.effect(target, card, player, _status.event.player);
                     },
                   },
                   order: 4,
@@ -851,6 +872,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 0';
                   player.chooseCard('he', '致安：将一张黑色牌交给' + get.translation(trigger.player) + "？", function (card, player, target) {
                     return get.color(card) === 'black';
+                  }).set('ai', function (card) {
+                    var isFriend = get.attitude(player, trigger.player) > 0
+                    if (isFriend) return 14 - get.value(card);
+                    return -1;
                   });
                   'step 1';
                   if (result.bool) {
@@ -893,6 +918,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.storage.furrykill_shanjian1 = target;
                   "step 1"
                   player.draw();
+                },
+                ai: {
+                  order: 10,
+                  result: {
+                    player: function (player, target) {
+                      return -get.attitude(player, target);
+                    },
+                  },
                 },
                 subSkill: {
                   1: {
@@ -1062,6 +1095,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 group: ["furrykill_xulei_1", "furrykill_xulei_2", "furrykill_xulei_3", "furrykill_xulei_getCard"],
                 locked: true,
                 forced: true,
+                ai: {
+                  maixie: true,
+                },
                 subSkill: {
                   1: {
                     audio: 2,
@@ -1313,7 +1349,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 content: function () {
                   'step 0';
                   if (player.countCards('he')) {
-                    player.chooseCard('he', '履冰：是否将一张牌置于武将牌上作为【霜】？');
+                    player.chooseCard('he', '履冰：是否将一张牌置于武将牌上作为【霜】？').set('ai', function (card) {
+                      return 5 - get.value(card);
+                    });
                   } else {
                     event.finish();
                   }
@@ -1368,7 +1406,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       player.chooseButton(['寒刃：是否交给其一张【霜】？其不能使用、打出或弃置与霜类别相同的牌，直到此回合结束。', event.shuang]).set('filterButton', function (button) {
                         return ui.selected.buttons.length == 0;
                       }).set('ai', function (button) {
-                        return get.value(button.link);
+                        if (get.attitude(player, event.target2) > 0) return -1;
+                        return 10 - get.value(button.link);
                       }).set('cards', event.shuang);
                       'step 1';
                       if (result.bool && result.links) {
@@ -1433,6 +1472,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   } else {
                     target.gainPlayerCard(1, 'he', player, true)
                   }
+                },
+                ai: {
+                  order: 10,
+                  result: {
+                    player: function (player, target) {
+                      if (get.attitude(player, target) > 0) return -1;
+                      if (target.countCards('h') >= 4) return 1;
+                      return -1;
+                    },
+                  },
                 },
               },
 
@@ -1802,6 +1851,15 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.markSkill('furrykill_shouhe');
                   }
                 },
+                ai: {
+                  order: 1,
+                  result: {
+                    player: function (player) {
+                      if (player.countCards('h') >= 2) return 1;
+                      return -1;
+                    },
+                  },
+                },
                 group: ["furrykill_shouhe_1", "furrykill_shouhe_2", "furrykill_shouhe_3"],
                 subSkill: {
                   1: {
@@ -1921,6 +1979,15 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.markSkill("furrykill_yinchang");
                   game.log(player, '已吟唱');
                 },
+                ai: {
+                  order: 1,
+                  result: {
+                    player: function (player) {
+                      if (player.countCards('h') <= player.hp) return 1;
+                      return -1;
+                    },
+                  },
+                },
               },
 
               furrykill_yanmu: {
@@ -2039,6 +2106,19 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.disableEquip('equip5');
                   player.addTempSkill('furrykill_xuenu1');
                 },
+                ai: {
+                  order: 13,
+                  result: {
+                    player: function (player) {
+                      var trick = player.countCards('h', function (card) {
+                        return get.type(card) == "trick";
+                      });
+                      var equip = player.countCards('e');
+                      if (trick >= 3 || equip >= 4) return 1;
+                      return -1;
+                    },
+                  },
+                },
               },
               furrykill_xuenu1: {
                 charlotte: true,
@@ -2136,7 +2216,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   }
                 },
                 ai: {
-                  expose: 0.2,
+                  expose: 0.5,
                   order: 9.1,
                   threaten: 2,
                   result: {
@@ -2223,6 +2303,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     && player != _status.currentPhase
                     && player.countCards('h') - player.countMingzhiCard() > 0;
                 },
+                check: function (card) {
+                  if (get.name(card) == "sha" ||
+                    (get.type(card) == "trick" && get.tag({ name: card.name }, "damage"))) {
+                    return 5 + get.value(card)
+                  }
+                  return 8 - get.value(card);
+                },
                 content: function () {
                   'step 0';
                   player.chooseCardToMingzhi(1, true, '明雪：明置一张牌');
@@ -2249,7 +2336,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   return player.storage.mingzhi;
                 },
                 check: function (event, player) {
-                  return get.attitude(player, event.target) < 0;
+                  return -get.attitude(player, event.target);
                 },
                 content: function () {
                   'step 0';
@@ -2293,6 +2380,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 delay: false,
                 filterCard: function (card, player) {
                   return !lib.filter.filterMingzhiCard(player, card);
+                },
+                check: function (card) {
+                  return 8 - get.value(card);
                 },
                 content: function () {
                   player.mingzhiCard(event.cards);
@@ -2391,11 +2481,25 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 usable: 1,
                 content: function () {
                   'step 0';
-                  if (player.getExpansions('furrykill_xunzhou').length == 0) {
+                  var zhiCount = player.getExpansions('furrykill_xunzhou').length;
+                  if (zhiCount == 0) {
                     event.goto(4);
                   } else {
                     var list = ["从牌堆发现", "从【挚】中发现"];
                     player.chooseControl(list, true, function () {
+
+                      if (zhiCount <= 3) {
+                        var zhi = player.getExpansions('furrykill_xunzhou');
+                        if (zhi.filter(c => {
+                          c.name == 'lebu' || c.name == 'wuzhong' || c.name == 'bingliang'
+                        }).length > 0) {
+                          return "从【挚】中发现";
+                        }
+                      }
+
+                      if (zhiCount < 10) return "从牌堆发现";
+                      var mod10 = zhiCount % 10;
+                      if (mod10 <= 2) return "从【挚】中发现";
                       return "从牌堆发现";
                     }).set('prompt', get.prompt2('furrykill_tansu'));
                   }
@@ -2501,7 +2605,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     },
                     ai: {
                       order: 10,
-                      threaten: 1.5,
+                      threaten: 1,
                       result: {
                         player: function (player, target) {
                           var target = game.findPlayer(function (current) {
@@ -2555,6 +2659,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 1';
                   target.recover();
                 },
+                ai: {
+                  order: 9,
+                  threaten: 3,
+                  result: {
+                    player: function (player, target) {
+                      if (player == target) return 10;
+                      return get.attitude(player, target);
+                    }
+                  }
+                },
                 intro: {
                   content: '手牌上限-#',
                 },
@@ -2602,7 +2716,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   }
                   'step 3';
                   event.targets[event.num].chooseCard('he', 1, '拥戴：是否交给' + get.translation(player) + '一张牌?').ai = function (card) {
-                    if (get.attitude(event.targets[event.num], player) > 0) return 10 - get.value(card);
+                    if (get.attitude(event.targets[event.num], player) > 0) {
+                      if (get.name(card) == "sha" ||
+                        (get.type(card) == "trick" && get.tag({ name: card.name }, "damage"))) {
+                        return 5 + get.value(card)
+                      }
+                      return 8 - get.value(card);
+                    }
                     return 2 - get.value(card);
                   };
                   'step 4';
@@ -2616,6 +2736,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 5';
                   event.num++;
                   if (event.num != targets.length) event.goto(3);
+                },
+                ai: {
+                  threaten: 3,
                 },
                 subSkill: {
                   after: {
@@ -2660,12 +2783,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_jiyin: {
-                usable: 1,
                 trigger: {
                   source: "damageSource",
                 },
                 frequent: true,
                 popup: false,
+                filter: function (event, player) {
+                  return !player.hasSkill('furrykill_jiyin_used');
+                },
                 content: function () {
                   'step 0';
                   var list = ["令至多两名角色分别弃置一张牌", "令该角色攻击范围内的一名角色失去一点体力", "取消"];
@@ -2689,6 +2814,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (result.bool) {
                     event.num = 0;
                     event.targets = result.targets;
+                    player.addTempSkill('furrykill_jiyin_used');
                     player.logSkill('furrykill_jiyin');
                   } else {
                     event.goto(0);
@@ -2708,12 +2834,19 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   });
                   'step 6';
                   if (result.bool && result.targets && result.targets.length) {
+                    player.addTempSkill('furrykill_jiyin_used');
                     player.logSkill('furrykill_jiyin');
                     result.targets[0].loseHp();
                   } else {
                     event.goto(0);
                   }
                 },
+                subSkill: {
+                  used: {
+                    charlotte: true,
+                    sub: true,
+                  }
+                }
               },
 
               furrykill_liushui: {
@@ -2723,6 +2856,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 frequent: true,
                 popup: false,
+                filter: function (event, player) {
+                  return !player.hasSkill('furrykill_liushui_used');
+                },
                 content: function () {
                   'step 0';
                   var list = ["令至多两名角色分别摸一张牌", "令攻击范围内的一名其他角色恢复一点体力", "取消"];
@@ -2745,6 +2881,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 2';
                   if (result.bool) {
                     game.asyncDraw(result.targets);
+                    player.addTempSkill('furrykill_liushui_used');
                     player.logSkill('furrykill_liushui');
                     event.finish();
                   } else {
@@ -2762,11 +2899,21 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   });
                   'step 4';
                   if (result.bool && result.targets && result.targets.length) {
+                    player.addTempSkill('furrykill_liushui_used');
                     player.logSkill('furrykill_liushui');
                     result.targets[0].recover();
                   } else {
                     event.goto(0);
                   }
+                },
+                subSkill: {
+                  used: {
+                    charlotte: true,
+                    sub: true,
+                  }
+                },
+                ai: {
+                  maixie: true,
                 },
               },
 
@@ -2878,7 +3025,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.16",
+      version: "1.9.115.2.17",
     },
   }
 })
