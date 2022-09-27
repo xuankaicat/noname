@@ -1,5 +1,5 @@
 window.noname_asset_list=[
-	'v1.9.115.2.16',
+	'v1.9.115.2.19',
 
 	"extension/FurryKill/furrykill_anliang.jpg",
 	"extension/FurryKill/furrykill_heibai.jpg",
@@ -18,6 +18,7 @@ window.noname_asset_list=[
 	"extension/FurryKill/furrykill_qingyu.jpg",
 	"extension/FurryKill/furrykill_haohai.jpg",
 	"extension/FurryKill/furrykill_shasha.jpg",
+	"extension/FurryKill/furrykill_halifax.jpg",
 
 	"extension/FurryKill/sp_furrykill_yongshi.jpg",
 

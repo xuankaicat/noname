@@ -6,6 +6,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         return '转换技，阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。<span class="bluetext">阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。</span>';
       return '转换技，<span class="bluetext">阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。</span>阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。';
     },
+    furrykill_chengming: function (player) {
+      if (player.storage.furrykill_chengming == true)
+        return '转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。<span class="bluetext">阴：你使用明置的牌后，摸一张牌。</span>';
+      return '转换技，锁定技，<span class="bluetext">阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。</span>阴：你使用明置的牌后，摸一张牌。';
+    },
   }
   return {
     name: "FurryKill", editable: false, content: function (config, pack) {
@@ -514,6 +519,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         //#endregion
 
         lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie;
+        lib.dynamicTranslate["furrykill_chengming"] = dynamicTranslate.furrykill_chengming;
 
         lib.characterReplace["furrykill_yongshi"] = ["furrykill_yongshi", "sp_furrykill_yongshi"];
 
@@ -657,6 +663,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_jiyin", "furrykill_liushui"],
                 ["des:南蛮入侵"],
               ],
+              furrykill_halifax: [
+                "male",
+                "furrykill_wolf",
+                3,
+                ["furrykill_xiaoxue", "furrykill_chengming"],
+                ["des:窃慧士"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -677,6 +690,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               sp_furrykill_yongshi: "SP勇士",
               furrykill_haohai: "浩海",
               furrykill_shasha: "杀杀",
+              furrykill_halifax: "哈利法尔",
             },
           },
           characterTitle: {
@@ -696,6 +710,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 filter: function (event, player) {
                   return !player.storage.furrykill_yinchang1;
                 },
+                check: function (event, player) {
+                  return false;
+                },
                 content: function () {
                   player.storage.furrykill_yinchang1 = true;
                   player.markSkill("furrykill_yinchang");
@@ -703,6 +720,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   trigger.cancel();
                 },
                 ai: {
+                  threaten: 0,
                   result: {
                     player: -1
                   },
@@ -716,6 +734,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 hiddenSkill: true,
                 logTarget: function () {
                   return _status.currentPhase;
+                },
+                check: function (event, player) {
+                  return get.attitude(player, _status.currentPhase) < 0;
                 },
                 filter: function (event, player) {
                   var target = _status.currentPhase;
@@ -776,6 +797,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   return player != event.player;
                 },
                 round: 1,
+                check: function (event, player) {
+                  return get.attitude(player, event.player) < 0;
+                },
                 content: function () {
                   "step 0";
                   player.storage.furrykill_xiaoshi_sign = true
@@ -1511,7 +1535,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (get.suit(card) != 'heart') return false;
                   if (!event.isFirstTarget) return false;
                   if (info.allowMultiple == false) return false;
-                  console.log(info.allowMultiple);
                   if (event.targets && !info.multitarget) {
                     if (game.hasPlayer(function (current) {
                       return !event.targets.contains(current) && lib.filter.targetEnabled2(event.card, event.player, current);
@@ -2523,6 +2546,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.gain(card, "draw");
                   game.log(player, '从牌堆发现了', card);
                 },
+                ai: {
+                  order: 10,
+                  threaten: 1,
+                },
               },
 
               furrykill_lingshi: {
@@ -2696,11 +2723,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 0';
                   player.showHandcards();
                   'step 1';
-                  player.chooseTarget("拥戴：指定至多三名其他角色，这些角色选择是否交给你一张牌。", [1, 3], function (card, player, target) {
+                  player.chooseTarget("拥戴：指定至多三名其他角色，这些角色选择是否交给你一张牌。", [1, 3], true, function (card, player, target) {
                     return player != target;
                   }, function (target) {
-                    if (!_status.event.check) return 0;
-                    return get.attitude(_status.event.player, target);
+                    return get.attitude(player, target);
                   });
                   'step 2';
                   if (result.bool) {
@@ -2845,7 +2871,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_liushui: {
-                usable: 1,
                 trigger: {
                   player: "damageEnd",
                 },
@@ -2867,7 +2892,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.chooseTarget("流水：令至多两名角色分别摸一张牌。", [1, 2], function (card, player, target) {
                       return true;
                     }, function (target) {
-                      if(player == target) return 10;
+                      if (player == target) return 10;
                       return get.attitude(player, target);
                     });
                   } else {
@@ -2910,6 +2935,162 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ai: {
                   maixie: true,
                 },
+              },
+
+              furrykill_xiaoxue: {
+                trigger: {
+                  global: "useCardAfter",
+                },
+                direct: true,
+                filter: function (event, player) {
+                  if (player == _status.currentPhase) return false;
+                  if (player.hasSkill('furrykill_xiaoxue_used')) return false;
+                  var type = get.type(event.card);
+                  if (type != "trick" && type != 'basic') return false;
+                  if (event.cards.filterInD().length == 0) return false;
+                  if (!player.storage.mingzhi && player.countCards('h') > 0) return true;
+                  if (player.storage.mingzhi.contains(m => get.type(m) == type)) return false;
+                  return player.countCards('h') - player.countMingzhiCard() > 0;
+                },
+                content: function () {
+                  'step 0';
+                  var type = get.type(trigger.card);
+                  var name = trigger.card.name;
+                  var value = get.value(trigger.card);
+                  player.chooseToDiscard('h', '效学：弃置一张与' + get.translation(trigger.card) + '类别相同、牌名不同的暗置牌，获得此牌并明置。',
+                    1, function (card) {
+                      if (player.storage.mingzhi && player.storage.mingzhi.contains(card)) return false;
+                      return get.type(card) == type && card.name != name;
+                    }).set('ai', function (card) {
+                      return value - get.value(card);
+                    });
+                  'step 1';
+                  if (result.bool) {
+                    player.addTempSkill('furrykill_xiaoxue_used');
+                    player.logSkill('furrykill_xiaoxue');
+
+                    event.gainCards = trigger.cards.filterInD();
+
+                    player.gain(event.gainCards, 'gain2', 'log');
+                  } else {
+                    event.finish();
+                  }
+                  'step 2';
+                  player.mingzhiCard(event.gainCards);
+                },
+                subSkill: {
+                  used: {
+                    charlotte: true,
+                    sub: true,
+                  }
+                }
+              },
+
+              furrykill_chengming: {
+                init: function (player) {
+                  player.storage.furrykill_chengming_lose = [];
+                },
+                mark: true,
+                locked: true,
+                forced: true,
+                zhuanhuanji: true,
+                marktext: "☯",
+                intro: {
+                  content: function (storage, player, skill) {
+                    var str = !player.storage.furrykill_chengming
+                      ? "你的暗置牌因弃置进入弃牌堆后，你摸一张牌。"
+                      : "你使用明置的牌后，摸一张牌。";
+                    return str;
+                  },
+                },
+                group: ["furrykill_chengming_0", "furrykill_chengming_1", "furrykill_chengming_2", "furrykill_chengming_3"],
+                subSkill: {
+                  0: {
+                    forced: true,
+                    priority: 1,
+                    trigger: { player: "loseEnd" },
+                    filter: function (event, player) {
+                      if (player.storage.furrykill_chengming) return false;
+                      if (event.type != 'discard') return false;
+
+                      player.storage.furrykill_chengming_lose = [];
+
+                      if (!player.storage.mingzhi) {
+                        player.storage.furrykill_chengming_lose = player.storage.furrykill_chengming_lose.concat(event.cards);
+                        return false;
+                      }
+
+                      for (var i = 0; i < event.cards.length; i++) {
+                        if (!player.storage.mingzhi.contains(event.cards[i])) {
+                          player.storage.furrykill_chengming_lose.add(event.cards[i]);
+                        }
+                      }
+                      return false;
+                    },
+                  },
+                  1: {
+                    prompt2: "你的暗置牌因弃置进入弃牌堆后，你摸一张牌。",
+                    trigger: { player: "loseAfter" },
+                    audio: 2,
+                    forced: true,
+                    filter: function (event, player) {
+                      if (player.storage.furrykill_chengming) return false;
+                      if (event.type != 'discard') return false;
+                      var lose = player.storage.furrykill_chengming_lose.concat();
+                      for (var i = 0; i < lose.length; i++) {
+                        if (get.position(lose[i], true) != 'd')
+                          player.storage.furrykill_chengming_lose.remove(lose[i]);
+                      }
+                      if (player.storage.furrykill_chengming_lose.length == 0) return false;
+                      return true;
+                    },
+                    content: function () {
+                      player.draw();
+                      player.storage.furrykill_chengming_lose = [];
+                      player.changeZhuanhuanji("furrykill_chengming");
+                      player.markSkill("furrykill_chengming");
+                    },
+                    sub: true,
+                  },
+                  2: {
+                    prompt2: "你使用明置的牌后，摸一张牌。",
+                    trigger: { player: "useCardAfter" },
+                    audio: 2,
+                    forced: true,
+                    filter: function (event, player) {
+                      if (!player.storage.furrykill_chengming) return false;
+                      if (player.storage.furrykill_chengming_lose.length == 0) return false;
+                      return true;
+                    },
+                    content: function () {
+                      player.draw();
+                      player.storage.furrykill_chengming_lose = [];
+                      player.changeZhuanhuanji("furrykill_chengming");
+                      player.markSkill("furrykill_chengming");
+                    },
+                    sub: true,
+                  },
+                  3: {
+                    forced: true,
+                    priority: 105,
+                    trigger: { player: "loseEnd" },
+                    filter: function (event, player) {
+                      if (!player.storage.furrykill_chengming) return false;
+                      if (event.type != 'use') return false;
+                      if (!player.storage.mingzhi) return false;
+
+                      player.storage.furrykill_chengming_lose = [];
+
+                      for (var i = 0; i < event.cards.length; i++) {
+                        if (player.storage.mingzhi.contains(event.cards[i])) {
+                          player.storage.furrykill_chengming_lose.add(event.cards[i]);
+                          return false;
+                        }
+                      }
+                      return false;
+                    },
+                  },
+                }
               },
 
             },
@@ -3007,6 +3188,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_jiyin_info: "每回合限一次，你造成伤害后，可以选择一项：1、令至多两名角色分别弃置一张牌；2、令该角色攻击范围内的一名角色失去一点体力。",
               furrykill_liushui: "流水",
               furrykill_liushui_info: "每回合限一次，你受到伤害后，可以选择一项：1、令至多两名角色分别摸一张牌；2、令攻击范围内的一名其他角色恢复一点体力。",
+              furrykill_xiaoxue: "效学",
+              furrykill_xiaoxue_info: "其他角色的回合限一次，一名色使用的基本牌或普通锦囊结算完毕后，若你没有同类别的明置牌，你可以弃置一张与之类别相同、牌名不同的暗置牌，获得此牌并明置。",
+              furrykill_chengming: "澄明",
+              furrykill_chengming_info: "转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。阴：你使用明置的牌后，摸一张牌。",
             },
           },
         }, "FurryKill");
@@ -3020,7 +3205,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.18",
+      version: "1.9.115.2.19",
     },
   }
 })
