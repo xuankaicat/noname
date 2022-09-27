@@ -2949,7 +2949,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (type != "trick" && type != 'basic') return false;
                   if (event.cards.filterInD().length == 0) return false;
                   if (!player.storage.mingzhi && player.countCards('h') > 0) return true;
-                  if (player.storage.mingzhi.contains(m => get.type(m) == type)) return false;
+                  if (player.storage.mingzhi.some(m => get.type(m) == type)) return false;
                   return player.countCards('h') - player.countMingzhiCard() > 0;
                 },
                 content: function () {
@@ -3205,7 +3205,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.19",
+      version: "1.9.115.2.20",
     },
   }
 })

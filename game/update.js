@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.115.2.19',
+	version:'1.9.115.2.20',
 	update:'1.9.115.2',
 	changeLog:[
 		'李密入选稿公布',
