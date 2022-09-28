@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.115.2.20',
+	version:'1.9.115.2.21',
 	update:'1.9.115.2',
 	changeLog:[
 		'李密入选稿公布',
@@ -8,8 +8,7 @@ window.noname_update={
 		'移动版阮慧、马日磾、全琮i',
 		'技能调整与bug修复',
 		'furrykill:',
-		'halifax',
-		'修复bug'
+		'奥森、楠瓜、提尔',
 	],
 	files:[
 		'extension/FurryKill/extension.js',
