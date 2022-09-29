@@ -2598,7 +2598,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     direct: true,
                     delay: false,
                     filter: function (event, player) {
-                      return !player.hasSkill('furrykill_wuzhu_used');
+                      return !player.hasSkill('furrykill_wuzhu_used') && game.hasPlayer(function (current) {
+                        return current.hasSkill('furrykill_wuzhu');
+                      });
                     },
                     content: function () {
                       "step 0";
@@ -3313,6 +3315,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.addMark('furrykill_sanwei', 3);
                   player._furrykill_sanwei = true;
                 },
+                marktext: '镜',
                 intro: {
                   name2: "镜",
                   content: "mark",
@@ -3584,7 +3587,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.21",
+      version: "1.9.115.2.22",
     },
   }
 })

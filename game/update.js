@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.115.2.21',
+	version:'1.9.115.2.22',
 	update:'1.9.115.2',
 	changeLog:[
 		'李密入选稿公布',
@@ -9,6 +9,7 @@ window.noname_update={
 		'技能调整与bug修复',
 		'furrykill:',
 		'奥森、楠瓜、提尔',
+		'修复bug'
 	],
 	files:[
 		'extension/FurryKill/extension.js',
