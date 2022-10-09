@@ -1033,7 +1033,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   content: function (storage, player, skill) {
                     var str = !player.storage.furrykill_qianlie
                       ? "以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。"
-                      : "你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。";
+                      : "你造成的伤害结算完毕后，可以发现一张牌。若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。";
                     return str;
                   },
                 },
@@ -1087,8 +1087,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     sub: true,
                   },
                   2: {
-                    prompt2:
-                      "你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。",
+                    prompt2:"你造成的伤害结算完毕后，可以发现一张牌。若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。",
                     trigger: { source: "damageEnd" },
                     audio: 2,
                     filter: function (event, player) {
@@ -1109,7 +1108,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         var evt = _status.event.getParent("phaseUse");
                         if (evt && evt.name == "phaseUse") {
                           player.skip("phaseDiscard");
-                          evt.skipped = true;
+                          player.addTempSkill("furrykill_qianlie_unusable");
                         }
                       }
                       "step 2";
@@ -1118,6 +1117,15 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     },
                     sub: true,
                   },
+                  unusable: {
+                    charlotte: true,
+                    mod:{
+                      cardEnabled:function(card,player){
+                        return false;
+                      },
+                    },
+                    sub: true,
+                  }
                 }
               },
 
@@ -3240,6 +3248,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     } else if (delta > 0) {
                       target.chooseToDiscard('h', true, delta);
                     } else {
+                      if(delta < -5) delta = -5;
                       target.draw(-delta);
                     }
                   }
@@ -3482,7 +3491,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_yvnian: "驭念",
               furrykill_yvnian_info: "你即将造成属性伤害时，可以弃一张牌令伤害+1，或摸一张牌令伤害-1。",
               furrykill_qianlie: "潜猎",
-              furrykill_qianlie_info: "转换技，阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。",
+              furrykill_qianlie_info: "转换技，阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。",
               furrykill_youxia: "游侠",
               furrykill_youxia_info: "锁定技，摸牌阶段，你额外摸一张牌。",
               furrykill_xulei: "蓄雷",
@@ -3567,7 +3576,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_juanren: "卷刃",
               furrykill_juanren_info: "若你于一回合内因弃置失去了至少三张牌，回合结束时你可以造成一点伤害。",
               furrykill_yanfan: "焰反",
-              furrykill_yanfan_info: "你受到伤害后，可以指定一名角色，若其角色手牌与体力值相等，则受到一点火焰伤害；否则其将手牌调整至体力值。",
+              furrykill_yanfan_info: "你受到伤害后，可以指定一名角色，若其角色手牌与体力值相等，则受到一点火焰伤害；否则其将手牌调整至体力值。（摸牌时至多摸至5张）",
               furrykill_xueyue: "血月",
               furrykill_xueyue_info: "限定技，出牌阶段，你可以对自己造成一点伤害，然后指定一名角色，该角色所有技能失效至到其回合结束。",
               furrykill_sanwei: "三尾",
