@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.115.2.23',
+	version:'1.9.115.2.24',
 	update:'1.9.115.2.21',
 	changeLog:[
 		'钟离牧入选稿公布',
@@ -8,7 +8,7 @@ window.noname_update={
 		'海外服神关羽',
 		'技能调整与bug修复',
 		'furrykill:',
-		'奥森、楠瓜、提尔',
+		'调整轩恺、楠瓜技能',
 		'修复bug'
 	],
 	files:[

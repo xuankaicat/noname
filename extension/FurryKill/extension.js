@@ -3352,8 +3352,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     direct: true,
                     content: function () {
                       'step 0';
-                      var jing = player.countMark('furrykill_sanwei');
-                      if (jing == 3) {
+                      event.jing = player.countMark('furrykill_sanwei');
+                      if (event.jing == 3) {
                         player.storage.furrykill_sanwei_draw = true;
                         player.storage.furrykill_sanwei_sha = true;
                         player.storage.furrykill_sanwei_handMax = true;
@@ -3366,7 +3366,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                             '出牌阶段使用杀的次数',
                             '手牌上限',
                           ];
-                          var choiceList = ui.create.dialog('三尾：请选择' + get.cnNumber(jing) + '项');
+                          var choiceList = ui.create.dialog('三尾：请选择' + get.cnNumber(event.jing) + '项');
                           choiceList.videoId = id;
                           for (var i = 0; i < list.length; i++) {
                             var str = '<div class="popup text" style="width:calc(100% - 10px);display:inline-block">';
@@ -3392,7 +3392,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         var next = player.chooseButton();
                         next.set('dialog', event.videoId);
                         next.set('forced', true);
-                        next.set('selectButton', jing);
+                        next.set('selectButton', event.jing);
                         next.set('ai', function (button) {
                           switch (button.link) {
                             case 0: return 3;
