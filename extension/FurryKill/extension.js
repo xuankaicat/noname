@@ -11,6 +11,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         return '转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。<span class="bluetext">阴：你使用明置的牌后，摸一张牌。</span>';
       return '转换技，锁定技，<span class="bluetext">阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。</span>阴：你使用明置的牌后，摸一张牌。';
     },
+    furrykill_sanyuan: function (player) {
+      if (player.storage.furrykill_sanyuan == 1)
+        return '吟唱，转换技，其他角色的准备阶段，你可以<span class="bluetext">① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；</span>② ：获得其装备区里的一张牌并使用之；③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。';
+      if (player.storage.furrykill_sanyuan == 2)
+        return '吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；<span class="bluetext">② ：获得其装备区里的一张牌并使用之；</span>③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。';
+      return '吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；② ：获得其装备区里的一张牌并使用之；<span class="bluetext">③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。</span>';
+    },
   }
   return {
     name: "FurryKill", editable: false, content: function (config, pack) {
@@ -516,6 +523,40 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
           },
         };
 
+        lib.element.content.yinchang = function () {
+          event.result = {};
+          player.storage.furrykill_yinchang1 = true;
+          player.markSkill("furrykill_yinchang");
+          game.log(player, '已吟唱');
+          event.result.bool = true;
+        }
+
+        lib.element.player.yinchang = function () {
+          var next = game.createEvent('yinchang');
+          next.player = this;
+
+          next.setContent('yinchang');
+          next._args = Array.from(arguments);
+          return next;
+        }
+
+        lib.element.content.unyinchang = function () {
+          event.result = {};
+          player.storage.furrykill_yinchang1 = false;
+          player.unmarkSkill("furrykill_yinchang");
+          game.log(player, '发动了吟唱效果');
+          event.result.bool = true;
+        }
+
+        lib.element.player.unyinchang = function () {
+          var next = game.createEvent('unyinchang');
+          next.player = this;
+
+          next.setContent('unyinchang');
+          next._args = Array.from(arguments);
+          return next;
+        }
+
         //#endregion
 
         lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie;
@@ -748,6 +789,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_youxia", "furrykill_jixing", "furrykill_xiemu"],
                 [],
               ],
+              furrykill_wenhaowenhao: [
+                "male",
+                "furrykill_fox",
+                3,
+                ["furrykill_yvmo", "furrykill_sanyuan", "furrykill_yuanli", "furrykill_yinchang"],
+                [],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -773,6 +821,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_nangua: "楠瓜",
               furrykill_tier: "提尔",
               furrykill_yueling: "月凌",
+              furrykill_wenhaowenhao: "？？",
             },
           },
           characterTitle: {
@@ -796,9 +845,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   return false;
                 },
                 content: function () {
-                  player.storage.furrykill_yinchang1 = true;
-                  player.markSkill("furrykill_yinchang");
-                  game.log(trigger.player, '已吟唱');
+                  player.yinchang();
                   trigger.cancel();
                 },
                 ai: {
@@ -2022,12 +2069,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw();
 
                   if (player.storage.furrykill_yinchang1) {
-                    game.log(trigger.player, '发动了吟唱效果');
-
+                    player.unyinchang();
                     player.damage();
-
-                    player.storage.furrykill_yinchang1 = false;
-                    player.unmarkSkill('furrykill_yinchang');
                   }
 
                 },
@@ -2064,8 +2107,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (event.num != event.targets.length)
                     event.redo();
                   "step 3";
-                  player.storage.furrykill_yinchang1 = false;
-                  player.unmarkSkill('furrykill_yinchang');
+                  player.unyinchang();
                 },
               },
 
@@ -2084,9 +2126,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 content: function () {
                   player.awakenSkill('furrykill_jiyong');
                   player.storage.furrykill_jiyong = true;
-                  player.storage.furrykill_yinchang1 = true;
-                  player.markSkill("furrykill_yinchang");
-                  game.log(player, '已吟唱');
+                  player.yinchang();
                 },
                 ai: {
                   order: 1,
@@ -3607,7 +3647,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   }
                   'step 3';
                   event.num--;
-                  if(event.num > 0) event.goto(1);
+                  if (event.num > 0) event.goto(1);
                 },
                 ai: {
                   order: -10,
@@ -3615,6 +3655,178 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     target: 2,
                   },
                   threaten: 1.5,
+                },
+              },
+
+              furrykill_yvmo: {
+                subSkill: {
+                  fire: {
+                    marktext: '🔥',
+                    intro: {
+                      name: '火',
+                      content: 'mark',
+                    },
+                  },
+                  water: {
+                    marktext: '💧',
+                    intro: {
+                      name: '水',
+                      content: 'mark',
+                    },
+                  },
+                  wood: {
+                    marktext: '🌿',
+                    intro: {
+                      name: '木',
+                      content: 'mark',
+                    },
+                  },
+                },
+                forced: true,
+                trigger: {
+                  player: "useCardAfter",
+                },
+                filter: function (event, player) {
+                  var type = get.type(event.card, 'trick');
+                  if (type == 'trick' && !player.hasMark('furrykill_yvmo_fire')) return true;
+                  else if (type == 'equip' && !player.hasMark('furrykill_yvmo_water')) return true;
+                  else if (type == 'basic' && !player.hasMark('furrykill_yvmo_wood')) return true;
+                  return false;
+                },
+                content: function () {
+                  'step 0';
+                  var type = get.type(trigger.card, 'trick');
+                  if (type == 'trick') player.addMark('furrykill_yvmo_fire');
+                  else if (type == 'equip') player.addMark('furrykill_yvmo_water');
+                  else player.addMark('furrykill_yvmo_wood');
+                  'step 1';
+                  if (player.hasMark('furrykill_yvmo_fire')
+                    && player.hasMark('furrykill_yvmo_water')
+                    && player.hasMark('furrykill_yvmo_wood')
+                    && !player.storage.furrykill_yinchang1) {
+                    player.yinchang();
+                    player.removeMark('furrykill_yvmo_fire');
+                    player.removeMark('furrykill_yvmo_water');
+                    player.removeMark('furrykill_yvmo_wood');
+                  }
+                },
+                group: ['furrykill_yvmo2'],
+              },
+              furrykill_yvmo2: {
+                trigger: {
+                  player: "unyinchangAfter",
+                },
+                forced: true,
+                filter: function (event, player) {
+                  if (player.hasMark('furrykill_yvmo_fire')
+                    && player.hasMark('furrykill_yvmo_water')
+                    && player.hasMark('furrykill_yvmo_wood')) {
+                    return true;
+                  }
+                  return false;
+                },
+                content: function () {
+                  player.yinchang();
+                  player.removeMark('furrykill_yvmo_fire');
+                  player.removeMark('furrykill_yvmo_water');
+                  player.removeMark('furrykill_yvmo_wood');
+                },
+              },
+
+              furrykill_sanyuan: {
+                init: function (player) {
+                  player.storage.furrykill_sanyuan = 1;
+                },
+                mark: true,
+                zhuanhuanji: true,
+                marktext: "三元",
+                intro: {
+                  content: function (storage, player, skill) {
+                    if (player.storage.furrykill_sanyuan == 1)
+                      return '视为对其使用一张铁索连环并对其造成一点火焰伤害。';
+                    if (player.storage.furrykill_sanyuan == 2)
+                      return '获得其装备区里的一张牌并使用之。';
+                    return '视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。';
+                  },
+                },
+                prompt2: function (event, player) {
+                  if (player.storage.furrykill_sanyuan == 1)
+                    return '视为对其使用一张铁索连环并对其造成一点火焰伤害。';
+                  if (player.storage.furrykill_sanyuan == 2)
+                    return '获得其装备区里的一张牌并使用之。';
+                  return '视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。';
+                },
+                trigger: {
+                  global: "phaseZhunbeiBegin",
+                },
+                filter: function (event, player) {
+                  if (player.storage.furrykill_sanyuan == 2
+                    && event.player.countCards('e') == 0) {
+                    return false;
+                  }
+                  return player != event.player && player.storage.furrykill_yinchang1;
+                },
+                content: function () {
+                  "step 0";
+                  if (player.storage.furrykill_sanyuan == 1) {
+                    event.goto(4);
+                  } else if (player.storage.furrykill_sanyuan == 2) {
+                    event.goto(7);
+                  }
+                  "step 1";
+                  player.storage.furrykill_sanyuan_sign = true
+                  event.card = { name: 'sha', isCard: true };
+                  event.related = player.useCard(event.card, trigger.player);
+                  "step 2";
+                  if (event.related && game.hasPlayer2(function (current) {
+                    return current.getHistory('damage', function (evt) {
+                      return evt.getParent(2) == event.related;
+                    }).length > 0;
+                  })) {
+                    player.recover();
+                  }
+                  "step 3";
+                  player.storage.furrykill_sanyuan = 1;
+                  player.markSkill("furrykill_sanyuan");
+                  player.unyinchang();
+                  event.finish();
+                  "step 4";
+                  event.card = { name: 'tiesuo', isCard: true };
+                  player.useCard(event.card, trigger.player);
+                  "step 5";
+                  player.line(trigger.player, 'fire');
+                  trigger.player.damage('fire');
+                  "step 6";
+                  player.storage.furrykill_sanyuan = 2;
+                  player.markSkill("furrykill_sanyuan");
+                  player.unyinchang();
+                  event.finish();
+                  "step 7";
+                  player.gainPlayerCard(trigger.player, 'e', true);
+                  "step 8";
+                  player.chooseUseTarget(result.cards[0], true, 'nopopup');
+                  "step 9";
+                  player.storage.furrykill_sanyuan = 3;
+                  player.markSkill("furrykill_sanyuan");
+                  player.unyinchang();
+                },
+              },
+
+              furrykill_yuanli: {
+                mod: {
+                  maxHandcard: function (player, num) {
+                    return num + 2;
+                  }
+                },
+                trigger: {
+                  player: "phaseJieshuBegin",
+                },
+                prompt2: "结束阶段，你可以转换一次三元。",
+                content: function () {
+                  var sanyuan = player.storage.furrykill_sanyuan + 1;
+                  if (sanyuan > 3) sanyuan = 1;
+                  player.storage.furrykill_sanyuan = sanyuan;
+                  player.markSkill("furrykill_sanyuan");
                 },
               },
 
@@ -3733,6 +3945,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_jixing_info: "锁定技，出牌阶段，你至多可以使用三张牌。你可以将锦囊牌当做加速使用（普通锦囊，出牌阶段使用，摸一张牌，此阶段你可以额外使用两张牌）。",
               furrykill_xiemu: "谢幕",
               furrykill_xiemu_info: "结束阶段，你本回合每使用过四张牌，便可以造成一次一点伤害。",
+              furrykill_yvmo: "御魔",
+              furrykill_yvmo_info: "锁定技，使用锦囊牌后，获得火；使用装备牌后，获得水；你使用基本牌后，获得木（每种标记最多拥有1个）。若你同时拥有三种标记且未吟唱，你将它们移除并进行吟唱。",
+              furrykill_sanyuan: "三元",
+              furrykill_sanyuan_info: "吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；② ：获得其装备区里的一张牌并使用之；③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。",
+              furrykill_yuanli: "源力",
+              furrykill_yuanli_info: "你的手牌上限+2。结束阶段，你可以转换一次三元。",
             },
           },
         }, "FurryKill");
