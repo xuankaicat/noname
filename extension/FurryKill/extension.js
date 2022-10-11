@@ -785,7 +785,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_yueling: [
                 "male",
                 "furrykill_rabbit",
-                2,
+                3,
                 ["furrykill_youxia", "furrykill_jixing", "furrykill_xiemu"],
                 [],
               ],
