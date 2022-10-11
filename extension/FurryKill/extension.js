@@ -524,8 +524,57 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         lib.characterReplace["furrykill_yongshi"] = ["furrykill_yongshi", "sp_furrykill_yongshi"];
 
         game.导入character = function (英文名, 翻译名, obj, 扩展包名) { var oobj = get.copy(obj); oobj.name = 英文名; oobj.character = obj.character.character; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.character.translate, obj.skill.translate); game.import('character', function () { if (lib.device || lib.node) { for (var i in oobj.character) { oobj.character[i][4].push('ext:' + 扩展包名 + '/' + i + '.jpg'); } } else { for (var i in oobj.character) { oobj.character[i][4].push('db:extension-' + 扩展包名 + ':' + i + '.jpg'); } } return oobj; }); lib.config.all.characters.push(英文名); if (!lib.config.characters.contains(英文名)) { lib.config.characters.push(英文名); } lib.translate[英文名 + '_character_config'] = 翻译名; };
-        game.导入card = function (英文名, 翻译名, obj) { var oobj = get.copy(obj); oobj.list = obj.card.list; oobj.card = obj.card.card; oobj.skill = obj.skill.skill; oobj.translate = Object.assign({}, obj.card.translate, obj.skill.translate); game.import('card', function () { return oobj }); lib.config.all.cards.push(英文名); if (!lib.config.cards.contains(英文名)) lib.config.cards.push(英文名); lib.translate[英文名 + '_card_config'] = 翻译名; };
         game.新增势力 = function (名字, 映射, 渐变) { var n, t; if (!名字) return; if (typeof 名字 == "string") { n = 名字; t = 名字 } else if (Array.isArray(名字) && 名字.length == 2 && typeof 名字[0] == "string") { n = 名字[0]; t = 名字[1] } else return; if (!映射 || !Array.isArray(映射) || 映射.length != 3) 映射 = [199, 21, 133]; var y = "(" + 映射[0] + "," + 映射[1] + "," + 映射[2]; var y1 = y + ",1)", y2 = y + ")"; var s = document.createElement('style'); var l; l = ".player .identity[data-color='diy" + n + "'],"; l += "div[data-nature='diy" + n + "'],"; l += "span[data-nature='diy" + n + "'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 10px,rgba" + y1 + " 0 0 10px}"; l += "div[data-nature='diy" + n + "m'],"; l += "span[data-nature='diy" + n + "m'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 5px,rgba" + y1 + " 0 0 5px,black 0 0 1px;}"; l += "div[data-nature='diy" + n + "mm'],"; l += "span[data-nature='diy" + n + "mm'] {text-shadow: black 0 0 1px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,rgba" + y1 + " 0 0 2px,black 0 0 1px;}"; s.innerHTML = l; document.head.appendChild(s); if (渐变 && Array.isArray(渐变) && Array.isArray(渐变[0]) && 渐变[0].length == 3) { var str = "", st2 = []; for (var i = 0; i < 渐变.length; i++) { str += ",rgb(" + 渐变[i][0] + "," + 渐变[i][1] + "," + 渐变[i][2] + ")"; if (i < 2) st2[i] = "rgb(" + 渐变[i][0] + "," + 渐变[i][1] + "," + 渐变[i][2] + ")"; } var tenUi = document.createElement('style'); tenUi.innerHTML = ".player>.camp-zone[data-camp='" + n + "']>.camp-back {background: linear-gradient(to bottom" + str + ");}"; tenUi.innerHTML += ".player>.camp-zone[data-camp='" + n + "']>.camp-name {text-shadow: 0 0 5px " + st2[0] + ", 0 0 10px " + st2[1] + ";}"; document.head.appendChild(tenUi); } lib.group.add(n); lib.translate[n] = t; lib.groupnature[n] = "diy" + n; };
+
+        game.import('card', function () {
+          return {
+            name: "furrykill_card",
+            connect: true,
+            card: {
+              furrykill_jiasu: {
+                audio: true,
+                fullskin: true,
+                type: 'trick',
+                image: "ext:FurryKill/furrykill_jiasu.jpg",
+                enable: true,
+                selectTarget: -1,
+                cardcolor: 'red',
+                toself: true,
+                filterTarget: function (card, player, target) {
+                  return target == player;
+                },
+                modTarget: true,
+                content: function () {
+                  target.draw(1);
+                  if (target.storage.furrykill_cardUseLimit != undefined)
+                    target.storage.furrykill_cardUseLimit += 2;
+                },
+                ai: {
+                  basic: {
+                    order: 7.2,
+                    useful: 4.5,
+                    value: 9.2
+                  },
+                  result: {
+                    target: 2,
+                  },
+                  tag: {
+                    draw: 2
+                  }
+                }
+              },
+
+            },
+            translate: {
+              furrykill_jiasu: "加速",
+              furrykill_jiasu_info: "摸一张牌，此阶段你可以额外使用两张牌。",
+            },
+            list: [],
+          }
+        });
+        lib.translate['furrykill_card_card_config'] = 'FurryKill';
+        lib.config.all.cards.push('furrykill_card');
+        if (!lib.config.cards.contains('furrykill_card')) lib.config.cards.remove('furrykill_card');
 
         game.新增势力(["furrykill_cat", "猫"], [37, 128, 237], [[37, 128, 237], [20, 60, 80]]);
         game.新增势力(["furrykill_fox", "狐"], [222, 68, 68], [[222, 68, 68], [80, 20, 20]]);
@@ -533,6 +582,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         game.新增势力(["furrykill_dragon", "龙"], [191, 191, 189], [[191, 191, 189], [60, 60, 60]]);
         game.新增势力(["furrykill_dog", "犬"], [68, 68, 222], [[68, 68, 222], [20, 20, 80]]);
         game.新增势力(["furrykill_tiger", "虎"], [249, 206, 110], [[249, 206, 110], [80, 60, 60]]);
+        game.新增势力(["furrykill_rabbit", "兔"], [222, 68, 68], [[222, 68, 68], [80, 20, 20]]);
         game.导入character("FurryKill", "FurryKill", {
           connect: true,
           character: {
@@ -691,6 +741,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_sanwei", "furrykill_ganlin"],
                 ["des:银月天狐"],
               ],
+              furrykill_yueling: [
+                "male",
+                "furrykill_rabbit",
+                2,
+                ["furrykill_youxia", "furrykill_jixing", "furrykill_xiemu"],
+                [],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -715,6 +772,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_aosen: "奥森",
               furrykill_nangua: "楠瓜",
               furrykill_tier: "提尔",
+              furrykill_yueling: "月凌",
             },
           },
           characterTitle: {
@@ -1087,7 +1145,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     sub: true,
                   },
                   2: {
-                    prompt2:"你造成的伤害结算完毕后，可以发现一张牌。若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。",
+                    prompt2: "你造成的伤害结算完毕后，可以发现一张牌。若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。",
                     trigger: { source: "damageEnd" },
                     audio: 2,
                     filter: function (event, player) {
@@ -1119,8 +1177,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   },
                   unusable: {
                     charlotte: true,
-                    mod:{
-                      cardEnabled:function(card,player){
+                    mod: {
+                      cardEnabled: function (card, player) {
                         return false;
                       },
                     },
@@ -3248,7 +3306,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     } else if (delta > 0) {
                       target.chooseToDiscard('h', true, delta);
                     } else {
-                      if(delta < -5) delta = -5;
+                      if (delta < -5) delta = -5;
                       target.draw(-delta);
                     }
                   }
@@ -3472,6 +3530,94 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_jixing: {
+                init: function (player) {
+                  player.storage.furrykill_cardUseLimit = 3;
+                },
+                enable: "phaseUse",
+                filterCard: function (card, player) {
+                  return get.type(card, 'trick') == 'trick';
+                },
+                viewAs: {
+                  name: "furrykill_jiasu",
+                },
+                viewAsFilter: function (player) {
+                  if (!player.countCards('h')) return false;
+                },
+                prompt: "将锦囊牌当做加速使用（摸一张牌，此阶段你可以额外使用两张牌）",
+                ai: {
+                  order: 5,
+                },
+                group: ['furrykill_jixing_count'],
+                subSkill: {
+                  reset: {
+                    direct: true,
+                    priority: 50,
+                    trigger: {
+                      player: "phaseUseBegin",
+                    },
+                    content: function () {
+                      player.storage.furrykill_cardUseLimit = 3;
+                    },
+                  },
+                  count: {
+                    trigger: { player: 'useCard1' },
+                    silent: true,
+                    firstDo: true,
+                    filter: function (event, player) {
+                      return player.isPhaseUsing();
+                    },
+                    content: function () {
+                      player.storage.furrykill_cardUseLimit--;
+                    },
+                    mod: {
+                      cardEnabled2: function (card, player) {
+                        if (player.storage.furrykill_cardUseLimit <= 0) return false;
+                      },
+                    },
+                  }
+                }
+              },
+
+              furrykill_xiemu: {
+                trigger: {
+                  player: "phaseEnd",
+                },
+                frequent: true,
+                filter: function (event, player) {
+                  return player.countUsed() >= 4;
+                },
+                content: function () {
+                  'step 0';
+                  console.log(player.countUsed());
+                  console.log(Math.floor(player.countUsed() / 4));
+                  event.num = Math.floor(player.countUsed() / 4);
+                  'step 1';
+                  player.chooseTarget('谢幕', function (card, player, target) {
+                    return true;
+                  }).set('prompt2', '造成一点伤害').ai = function (target) {
+                    return get.damageEffect(target, player, player);
+                  }
+                  'step 2';
+                  if (result.bool) {
+                    player.line(result.targets[0]);
+                    result.targets[0].damage();
+                  } else {
+                    event.finish();
+                  }
+                  'step 3';
+                  event.num--;
+                  if(event.num > 0) event.goto(1);
+                },
+                ai: {
+                  order: -10,
+                  result: {
+                    target: 2,
+                  },
+                  threaten: 1.5,
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -3583,6 +3729,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_sanwei_info: "游戏开始时，你获得3个【镜】。准备阶段，你选择X项，本回合中这些这些数值+1（X为【镜】的数量）：1、摸牌阶段的摸牌数；2、出牌阶段使用杀的次数；3、手牌上限。然后，没有被选择的数值在本回合中-1。",
               furrykill_ganlin: "甘霖",
               furrykill_ganlin_info: "一名角色进入濒死时，你可以移除一个【镜】令其回复体力至2。然后若你没有【镜】，你死亡。",
+              furrykill_jixing: "疾行",
+              furrykill_jixing_info: "锁定技，出牌阶段，你至多可以使用三张牌。你可以将锦囊牌当做加速使用（普通锦囊，出牌阶段使用，摸一张牌，此阶段你可以额外使用两张牌）。",
+              furrykill_xiemu: "谢幕",
+              furrykill_xiemu_info: "结束阶段，你本回合每使用过四张牌，便可以造成一次一点伤害。",
             },
           },
         }, "FurryKill");
