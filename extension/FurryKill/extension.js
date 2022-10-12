@@ -28,6 +28,20 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
         //#region 扩展
 
+        lib.skill.furrykill_cardUseLimit = {
+          marktext: '⏳',
+          intro: {
+            markcount: function (storage) {
+              if (storage) return storage[1] + "/" + storage[0];
+              return 0;
+            },
+            content: function (storage) {
+              return '<div class="text center">已经使用了' + storage[1] + '张牌</br>一共能使用' + storage[0] + '张牌</div>'
+            }
+          },
+        }
+        lib.translate.furrykill_cardUseLimit = '卡牌使用限制';
+
         lib.element.content.furrykillDiscoverCard = function () {
           "step 0";
           if (event.gotoOrdering) game.cardsGotoOrdering(event.cards);
@@ -587,8 +601,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 modTarget: true,
                 content: function () {
                   target.draw(1);
-                  if (target.storage.furrykill_cardUseLimit != undefined)
-                    target.storage.furrykill_cardUseLimit += 2;
+                  if (target.storage.furrykill_cardUseLimit != undefined) {
+                    target.storage.furrykill_cardUseLimit[0] += 2;
+                    target.markSkill("furrykill_cardUseLimit");
+                  }
                 },
                 ai: {
                   basic: {
@@ -3572,7 +3588,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
               furrykill_jixing: {
                 init: function (player) {
-                  player.storage.furrykill_cardUseLimit = 3;
+                  player.storage.furrykill_cardUseLimit = [3, 0];
                 },
                 enable: "phaseUse",
                 filterCard: function (card, player) {
@@ -3588,16 +3604,27 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ai: {
                   order: 5,
                 },
-                group: ['furrykill_jixing_count'],
+                group: ['furrykill_jixing_reset', 'furrykill_jixing_hidden', 'furrykill_jixing_count'],
                 subSkill: {
                   reset: {
                     direct: true,
                     priority: 50,
                     trigger: {
-                      player: "phaseUseBegin",
+                      player: "phaseUseBefore",
                     },
                     content: function () {
-                      player.storage.furrykill_cardUseLimit = 3;
+                      player.storage.furrykill_cardUseLimit = [3, 0];
+                      player.markSkill("furrykill_cardUseLimit");
+                    },
+                  },
+                  hidden: {
+                    direct: true,
+                    priority: 50,
+                    trigger: {
+                      player: "phaseUseAfter",
+                    },
+                    content: function () {
+                      player.unmarkSkill("furrykill_cardUseLimit");
                     },
                   },
                   count: {
@@ -3605,14 +3632,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     silent: true,
                     firstDo: true,
                     filter: function (event, player) {
-                      return player.isPhaseUsing();
+                      return _status.currentPhase == player;
                     },
                     content: function () {
-                      player.storage.furrykill_cardUseLimit--;
+                      player.storage.furrykill_cardUseLimit[1]++;
+                      player.markSkill("furrykill_cardUseLimit");
                     },
                     mod: {
                       cardEnabled2: function (card, player) {
-                        if (player.storage.furrykill_cardUseLimit <= 0) return false;
+                        if (_status.currentPhase == player
+                          && player.storage.furrykill_cardUseLimit[1] >= player.storage.furrykill_cardUseLimit[0]) return false;
                       },
                     },
                   }
@@ -3625,13 +3654,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 frequent: true,
                 filter: function (event, player) {
-                  return player.countUsed() >= 4;
+                  return player.countUsed(false, true) >= 4;
                 },
                 content: function () {
                   'step 0';
-                  console.log(player.countUsed());
-                  console.log(Math.floor(player.countUsed() / 4));
-                  event.num = Math.floor(player.countUsed() / 4);
+                  event.num = Math.floor(player.countUsed(false, true) / 4);
                   'step 1';
                   player.chooseTarget('谢幕', function (card, player, target) {
                     return true;
