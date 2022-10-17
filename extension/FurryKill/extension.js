@@ -3,8 +3,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
   var dynamicTranslate = {
     furrykill_qianlie: function (player) {
       if (player.storage.furrykill_qianlie == true)
-        return '转换技，阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。<span class="bluetext">阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。</span>';
-      return '转换技，<span class="bluetext">阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。</span>阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，结束此阶段并跳过本回合的弃牌阶段。';
+        return '转换技，阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。<span class="bluetext">阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。</span>';
+      return '转换技，<span class="bluetext">阳：以你为目标的锦囊牌结算完毕后，可以使用一张杀或伤害锦囊牌。</span>阴：你造成的伤害结算完毕后，可以发现一张牌，若此时是你的出牌阶段，你跳过本回合的弃牌阶段，并且本阶段你不能再使用牌。';
     },
     furrykill_chengming: function (player) {
       if (player.storage.furrykill_chengming == true)
@@ -812,6 +812,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_yvmo", "furrykill_sanyuan", "furrykill_yuanli", "furrykill_yinchang"],
                 [],
               ],
+              furrykill_han: [
+                "male",
+                "furrykill_cat",
+                3,
+                ["furrykill_qianmeng", "furrykill_zheyue"],
+                ["des:小心玻璃"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -838,6 +845,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_tier: "提尔",
               furrykill_yueling: "月凌",
               furrykill_wenhaowenhao: "？？",
+              furrykill_han: "涵",
             },
           },
           characterTitle: {
@@ -1012,10 +1020,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   threaten: 2,
                   result: {
                     player: function (card, player, target) {
-                      if (player.hp == 1) return -1;
-                      var isFriend = get.attitude(player, target) > 0
-                      if (isFriend) return 4 - get.effect(target, card, player, _status.event.player);
-                      return -6 + get.effect(target, card, player, _status.event.player);
+                      if (player.hp == 1) return -10;
+                    },
+                  },
+                  result: {
+                    target: function (player, target) {
+                      return 6 + get.effect(target, card, player, _status.event.player);
                     },
                   },
                   order: 4,
@@ -1067,6 +1077,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.recover();
                     game.log(trigger.player, '使', player, "回复了一点体力");
                   }
+                },
+                ai: {
+                  expose: 0.5,
+                  order: 9.1,
+                  threaten: 1,
+                  result: {
+                    target: function (player, target) {
+                      return 5;
+                    },
+                  },
                 },
               },
 
@@ -1196,11 +1216,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         player.chooseToUse(
                           "潜猎：是否使用一张杀或伤害锦囊牌", true,
                           function (card) {
-                            return (
-                              get.name(card) == "sha" ||
-                              (get.type2(card, false) == "trick" &&
+                            return (get.name(card) == "sha"
+                              || (get.type2(card, false) == "trick" &&
                                 get.tag({ name: card.name }, "damage"))
-                            );
+                            ) && player.hasUseTarget(card);
                           }
                         ).logSkill = "furrykill_qianlie";
                       }
@@ -2386,8 +2405,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   threaten: 2,
                   result: {
                     target: function (player, target) {
-                      if (target.hp <= 2 && get.attitude(player, target) < 0) return -0.5;
-                      return 1;
+                      return -5;
                     },
                   },
                 },
@@ -3406,8 +3424,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   threaten: 2,
                   result: {
                     target: function (player, target) {
-                      if (target.hp <= 2 && get.attitude(player, target) < 0) return -0.5;
-                      return 1;
+                      return -5;
                     },
                   },
                 },
@@ -3857,6 +3874,70 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_qianmeng: {
+                enable: "phaseUse",
+                usable: 1,
+                selectTarget: [1, 2],
+                filterTarget: function (card, player, target) {
+                  return player != target && player.countCards('he') > ui.selected.targets.length;
+                },
+                content: function () {
+                  'step 0';
+                  player.chooseCard(true, 'he', 1)
+                    .set('prompt', '选择交给' + get.translation(target) + '的牌');
+                  'step 1';
+                  event.gainCard = result.cards[0];
+                  target.gain(event.gainCard, 'give', player);
+                  'step 2'
+                  if (target.hasUseTarget(event.gainCard)) {
+                    target.chooseUseTarget(false, event.gainCard, false).logSkill = 'furrykill_qianmeng';
+                  }
+                },
+                ai: {
+                  order: 9,
+                  result: {
+                    target: function (player, target) {
+                      return 5;
+                    },
+                  },
+                  threaten: 2,
+                },
+              },
+
+              furrykill_zheyue: {
+                trigger: { global: "useCardAfter" },
+                direct: true,
+                filter: function (event, player) {
+                  if (_status.currentPhase == event.player) return false;
+                  var type = get.type(event.card, 'trick');
+                  if (type == 'trick' || event.card.name == 'sha') return true;
+                  return false;
+                },
+                content: function () {
+                  'step 0';
+                  event.choice2 = '令' + get.translation(trigger.player) + '摸一张牌';
+                  player.chooseControl('摸一张牌', event.choice2, 'cancel2', function () {
+                    if (get.attitude(player, trigger.player) > 1.5) {
+                      return event.choice2;
+                    }
+                    return '摸一张牌';
+                  }).set('prompt', get.prompt2('furrykill_zheyue'));
+                  'step 1';
+                  if (result.control == 'cancel2') {
+                    event.finish();
+                  } else if (result.control == '摸一张牌') {
+                    player.draw();
+                    player.logSkill('furrykill_zheyue');
+                  } else {
+                    trigger.player.draw();
+                    player.logSkill('furrykill_zheyue', trigger.player);
+                  }
+                },
+                ai: {
+                  expose: 0.1,
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -3978,12 +4059,111 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_sanyuan_info: "吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；② ：获得其装备区里的一张牌并使用之；③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。",
               furrykill_yuanli: "源力",
               furrykill_yuanli_info: "你的手牌上限+2。结束阶段，你可以转换一次三元。",
+              furrykill_qianmeng: "牵梦",
+              furrykill_qianmeng_info: "出牌阶段限一次，你可以选择至多两名其他角色，展示并分别交给这些角色一张牌。然后这些角色可以使用你给出的牌。",
+              furrykill_zheyue: "遮月",
+              furrykill_zheyue_info: "一名角色在其回合外使用杀或锦囊牌时，你可以令你或该角色摸一张牌。",
             },
           },
         }, "FurryKill");
+
+        if (lib.config.extension_FurryKill_fake) {
+          lib.characterReplace["furrykill_anliang"] = ["furrykill_anliang", "furrykill_anliang_jie"];
+
+          game.导入character("FurryKillFake", "FurryKillFake", {
+            connect: true,
+            character: {
+              character: {
+                furrykill_anliang_jie: [
+                  "male",
+                  "furrykill_wolf",
+                  3,
+                  ["furrykill_lvbing", "furrykill_hanren", "furrykill_ruiyan_jie"],
+                  ["hiddenSkill", "des:珀瞳"],
+                ],
+              },
+              translate: {
+                furrykill_anliang_jie: "界安谅",
+              },
+            },
+            characterTitle: {
+            },
+            skill: {
+              skill: {
+                furrykill_ruiyan_jie: {
+                  enable: 'phaseUse',
+                  usable: 1,
+                  filterTarget: function (card, player, target) {
+                    return target != player && target.countCards('h') > 0;
+                  },
+                  content: function () {
+                    'step 0';
+                    player.viewHandcards(target);
+                    'step 1';
+                    var cards = target.getCards('h');
+                    var types = cards.map((c) => {
+                      return get.type(c, 'trick');
+                    });
+                    var typeCount = types.filter((item, index) => {
+                      return types.indexOf(item) === index;
+                    }).length;
+
+                    if (typeCount >= 2) {
+                      var list = ["选择其中一张获得", "弃置你与其手中一种类别的牌"];
+                      player.chooseControl(list, true, function () {
+                        return "选择其中一张获得";
+                      }).set('prompt', get.prompt2('furrykill_ruiyan_jie'));
+                    } else {
+                      target.gainPlayerCard(1, 'he', player, true)
+                      event.finish();
+                    }
+                    'step 2';
+                    if (result.control == "选择其中一张获得") {
+                      player.gainPlayerCard(1, 'h', target, true, 'visible');
+                      event.finish();
+                    } else {
+                      var list = ["基本牌", "锦囊牌", "装备牌"];
+                      player.chooseControl(list, true, function () {
+                        return "基本牌";
+                      }).set('prompt', get.prompt2('furrykill_ruiyan_jie'));
+                    }
+                    'step 3';
+                    event.discardType = "basic";
+                    if (result.control == "锦囊牌") {
+                      event.discardType = "trick";
+                    } else if (result.control == "装备牌") {
+                      event.discardType = "equip";
+                    }
+                    player.discard(player.getCards('h').filter(c =>
+                      get.type(c, 'trick') == event.discardType));
+                    'step 4';
+                    target.discard(target.getCards('h').filter(c =>
+                      get.type(c, 'trick') == event.discardType));
+                  },
+                  ai: {
+                    order: 10,
+                    result: {
+                      player: function (player, target) {
+                        if (get.attitude(player, target) > 0) return -1;
+                        if (target.countCards('h') >= 4) return -get.attitude(player, target);
+                        return -1;
+                      },
+                    },
+                  },
+                },
+
+              },
+              translate: {
+                furrykill_ruiyan_jie: "锐眼",
+                furrykill_ruiyan_jie_info: "出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其手中一种类别的牌；否则其获得你的一张牌。",
+              },
+            },
+          }, "FurryKill");
+        }
       }
     }, help: {}, config: {
       "FurryKill": { "name": "将FurryKill设为禁用", "init": false },
+      "fake": { "name": "启用假卡", "init": true },
     }, package: {
       intro: `
 				<span style='font-weight: bold;'>小动物的三国杀</span>
