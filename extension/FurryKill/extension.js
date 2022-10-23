@@ -4569,8 +4569,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     trigger: { global: "recoverEnd" },
                     direct: true,
                     filter: function (event, player) {
-                      var evt = event.getParent("furrykill_xingzhou_after");
-                      if (evt && evt.name == "furrykill_xingzhou_after") {
+                      var evt = event.getParent("furrykill_xingzhou_after_after");
+                      if (evt && evt.name == "furrykill_xingzhou_after_after") {
                         return false;
                       }
                       return player == event.source;
@@ -4583,16 +4583,26 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 }
               },
               furrykill_xingzhou_after: {
-                trigger: { player: 'phaseEnd' },
+                trigger: { player: 'phaseAfter' },
                 charlotte: true,
                 direct: true,
                 priority: 201,
+                content: function () {
+                  player.addSkill('furrykill_xingzhou_after_after');
+                  player.removeSkill('furrykill_xingzhou_after');
+                },
+              },
+              furrykill_xingzhou_after_after: {
+                trigger: { player: 'phaseEnd' },
+                charlotte: true,
+                direct: true,
+                priority: 199,
                 content: function () {
                   if (!player.isHealthy()) {
                     player.logSkill('furrykill_xingzhou');
                     player.recover();
                   }
-                  player.removeSkill('furrykill_xingzhou_after');
+                  player.removeSkill('furrykill_xingzhou_after_after');
                 },
               },
 
@@ -5438,7 +5448,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.2",
+      version: "1.9.116.2.3",
     },
   }
 })
