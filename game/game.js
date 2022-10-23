@@ -41,7 +41,7 @@
 		},
 		updateURL:'https://raw.githubusercontent.com/libccy/noname',
 		mirrorURL:'https://nakamurayuri.coding.net/p/noname/d/noname/git/raw',
-		hallURL:'122.51.66.117:7642',
+		hallURL:'noname.xhys.cool',
 		assetURL:'',
 		changeLog:[],
 		updates:[],
@@ -7668,7 +7668,7 @@
 								}
 								_status.evaluatingExtension=false;
 							}
-							else if(lib.config.mode!='connect'||(!localStorage.getItem(lib.configprefix+'directstart')&&show_splash)){
+							else {//if(lib.config.mode!='connect'||(!localStorage.getItem(lib.configprefix+'directstart')&&show_splash)){
 								extensionlist.push(lib.config.extensions[i]);
 							}
 						}
