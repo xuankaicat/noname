@@ -849,7 +849,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_moling: [
                 "male",
                 "furrykill_cat",
-                4,
+                3,
                 ["furrykill_xingzhou", "furrykill_xingzhan", "furrykill_xinggong"],
                 ["des:占星术士"],
               ],
@@ -3068,12 +3068,18 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (event.num != targets.length) event.goto(3);
                   else event.finish();
                   'step 5';
-                  player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
+                  if (game.hasPlayer(function (player) {
+                    return player != trigger.player && trigger.player.inRange(player);
+                  })) {
                     var source = trigger.player;
-                    return target != source && source.inRange(target);
-                  }).set('ai', function (target) {
-                    return get.damageEffect(target, player, player);
-                  });
+                    player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
+                      return target != source && source.inRange(target);
+                    }).set('ai', function (target) {
+                      return get.damageEffect(target, player, player);
+                    });
+                  } else {
+                    event.goto(0);
+                  }
                   'step 6';
                   if (result.bool && result.targets && result.targets.length) {
                     player.addTempSkill('furrykill_jiyin_used');
@@ -4285,15 +4291,19 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   "step 0";
+                  player.removeSkill('furrykill_quanneng1');
+                  player.removeSkill('furrykill_quanneng2');
+                  player.removeSkill('furrykill_quanneng3');
+                  "step 1";
                   player.init('furrykill_mingyu_evil');
                   player.update();
-                  ui.clear();
-                  "step 1";
-                  player.discard(player.getCards('hej'));
                   "step 2";
+                  player.discard(player.getCards('hej'));
+                  ui.clear();
+                  "step 3";
                   player.draw(4);
                   player.addSkill("furrykill_quanneng_kill");
-                  "step 3";
+                  "step 4";
                   if (_status.mode == 'two') {
                     game.broadcastAll(function (player) {
                       game.countPlayer(function (current) {
@@ -4329,7 +4339,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     }, player);
                     event.trigger('zhuUpdate');
                   }
-                  "step 4";
+                  "step 5";
                   while (_status.event.name != 'phaseLoop') {
                     _status.event = _status.event.parent;
                   }
@@ -4706,7 +4716,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       if (basic && trick && equip) limit = 2;
                       if (player.storage.furrykill_xingzhan_star_black >= limit) return false;
 
-                      return player == event.player || get.distance(player, event.player) <= 1;
+                      return get.distance(player, event.player) > 1;
                     },
                     content: function () {
                       player.draw();
@@ -4745,7 +4755,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       if (basic && trick && equip) limit = 2;
                       if (player.storage.furrykill_xingzhan_star_red >= limit) return false;
 
-                      return get.distance(player, event.player) > 1;
+                      return player == event.player || get.distance(player, event.player) <= 1;
                     },
                     content: function () {
                       player.draw();
@@ -5126,7 +5136,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_xingzhou_info: "锁定技，因你回复体力的角色（此效果除外）在其下个回合的结束阶段回复一点体力；</br>出牌阶段，你可以对其他角色使用桃；</br>你对其他角色使用桃时，摸一张牌。",
               furrykill_xingzhan: "星占",
               furrykill_xingzhan_star: "星",
-              furrykill_xingzhan_info: "出牌阶段限一次，你可以摸一张牌，然后将一张牌置于一名角色的武将牌上，称为星，然后若星的数量大于3，移去一个星。</br>有黑色星的角色对距离为1以内的角色造成伤害时，摸一张牌；</br>有红色星的角色对距离大于1的角色造成伤害时，摸一张牌。</br>（每种效果每回合限一次，若场上有三种类别的星，将限一次改为限两次。）",
+              furrykill_xingzhan_info: "出牌阶段限一次，你可以摸一张牌，然后将一张牌置于一名角色的武将牌上，称为星，然后若星的数量大于3，移去一个星。</br>有红色星的角色对距离为1以内的角色造成伤害时，摸一张牌；</br>有黑色星的角色对距离大于1的角色造成伤害时，摸一张牌。</br>（每种效果每回合限一次，若场上有三种类别的星，将限一次改为限两次。）",
               furrykill_xinggong: "星宫",
               furrykill_xinggong_info: "限定技，出牌阶段，你可以令所有有星的角色恢复一点体力。",
               furrykill_zhengfa: "征伐",
@@ -5428,7 +5438,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.115.2.22",
+      version: "1.9.116.2.2",
     },
   }
 })

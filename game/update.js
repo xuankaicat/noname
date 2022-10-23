@@ -1,13 +1,9 @@
 window.noname_update={
-	version:'1.9.116.2.1',
+	version:'1.9.116.2.2',
 	update:'1.9.116',
 	changeLog:[
-		'派对浪客、樱庭星罗入选稿公布',
-		'OL曹宪曹华、十周年刘巴、陆凯、夏侯令女',
-		'花色字体显示优化',
-		'技能调整与bug修复',
-		'furrykill:',
-		'月凌 ？？ 涵 界安谅 冥榆 默灵 万恩 云岚 战吼'
+		'月凌 ？？ 涵 界安谅 冥榆 默灵 万恩 云岚 战吼',
+		'bug修复'
 	],
 	files:[
 		'extension/FurryKill/extension.js',
