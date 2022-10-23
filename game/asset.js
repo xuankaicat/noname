@@ -1,30 +1,5 @@
 window.noname_asset_list=[
-	'v1.9.115.23',
-
-	"extension/FurryKill/furrykill_anliang.jpg",
-	"extension/FurryKill/furrykill_heibai.jpg",
-	"extension/FurryKill/furrykill_shifeng.jpg",
-	"extension/FurryKill/furrykill_sword.jpg",
-	"extension/FurryKill/furrykill_xiaoba.jpg",
-	"extension/FurryKill/furrykill_xuankai.jpg",
-	"extension/FurryKill/furrykill_yongshi.jpg",
-	"extension/FurryKill/furrykill_guoguo.jpg",
-	"extension/FurryKill/furrykill_baitu.jpg",
-	"extension/FurryKill/furrykill_yizhichuan.jpg",
-	"extension/FurryKill/furrykill_xiaorui.jpg",
-	"extension/FurryKill/furrykill_gudong.jpg",
-	"extension/FurryKill/furrykill_qinhan.jpg",
-	"extension/FurryKill/furrykill_lanyuan.jpg",
-	"extension/FurryKill/furrykill_qingyu.jpg",
-	"extension/FurryKill/furrykill_haohai.jpg",
-	"extension/FurryKill/furrykill_shasha.jpg",
-	"extension/FurryKill/furrykill_halifax.jpg",
-	"extension/FurryKill/furrykill_aosen.jpg",
-	"extension/FurryKill/furrykill_nangua.jpg",
-	"extension/FurryKill/furrykill_tier.jpg",
-
-	"extension/FurryKill/sp_furrykill_yongshi.jpg",
-
+	'v1.9.116',
 	'audio/background/aozhan_chaoming.mp3',
 	'audio/background/aozhan_online.mp3',
 	'audio/background/aozhan_rewrite.mp3',
@@ -36,7 +11,7 @@ window.noname_asset_list=[
 	'audio/background/music_phliosophy.mp3',
 	'audio/background/music_jilve.mp3',
 	'audio/card/default.mp3',
-
+	
 	'audio/card/female/caomu.mp3',
 	'audio/card/female/chiling.mp3',
 	'audio/card/female/diaohulishan.mp3',
@@ -68,7 +43,7 @@ window.noname_asset_list=[
 	'audio/card/female/sha_stab.mp3',
 	'audio/card/female/tiaojiyanmei.mp3',
 	'audio/card/female/tuixinzhifu.mp3',
-
+	
 	'audio/card/female/bagua.mp3',
 	'audio/card/female/baiyin.mp3',
 	'audio/card/female/chitu.mp3',
@@ -94,7 +69,7 @@ window.noname_asset_list=[
 	'audio/card/female/zhuge.mp3',
 	'audio/card/female/zhuque.mp3',
 	'audio/card/female/zixin.mp3',
-
+		
 	'audio/card/female/bingliang.mp3',
 	'audio/card/female/guohe.mp3',
 	'audio/card/female/huogong.mp3',
@@ -118,7 +93,7 @@ window.noname_asset_list=[
 	'audio/card/female/yiyi.mp3',
 	'audio/card/female/yuanjiao.mp3',
 	'audio/card/female/zhibi.mp3',
-
+	
 	'audio/card/male/caomu.mp3',
 	'audio/card/male/chiling.mp3',
 	'audio/card/male/diaohulishan.mp3',
@@ -150,7 +125,7 @@ window.noname_asset_list=[
 	'audio/card/male/sha_stab.mp3',
 	'audio/card/male/tiaojiyanmei.mp3',
 	'audio/card/male/tuixinzhifu.mp3',
-
+	
 	'audio/card/male/bagua.mp3',
 	'audio/card/male/baiyin.mp3',
 	'audio/card/male/chitu.mp3',
@@ -176,7 +151,7 @@ window.noname_asset_list=[
 	'audio/card/male/zhuge.mp3',
 	'audio/card/male/zhuque.mp3',
 	'audio/card/male/zixin.mp3',
-
+	
 	'audio/card/male/bingliang.mp3',
 	'audio/card/male/guohe.mp3',
 	'audio/card/male/huogong.mp3',
@@ -200,7 +175,7 @@ window.noname_asset_list=[
 	'audio/card/male/yiyi.mp3',
 	'audio/card/male/yuanjiao.mp3',
 	'audio/card/male/zhibi.mp3',
-
+	
 	'audio/die/baosanniang.mp3',
 	'audio/die/beimihu.mp3',
 	'audio/die/bianfuren.mp3',
@@ -986,7 +961,7 @@ window.noname_asset_list=[
 	'audio/die/zumao.mp3',
 	'audio/die/zuoci.mp3',
 	'audio/die/zuofen.mp3',
-
+	
 	'audio/effect/damage.mp3',
 	'audio/effect/damage_female.mp3',
 	'audio/effect/damage_male.mp3',
@@ -4578,7 +4553,7 @@ window.noname_asset_list=[
 	'audio/voice/female/20.mp3',
 	'audio/voice/female/21.mp3',
 	'audio/voice/female/22.mp3',
-
+	
 	'font/huangcao.ttf',
 	'font/shousha.ttf',
 	'font/xiaozhuan.ttf',
@@ -4598,7 +4573,7 @@ window.noname_asset_list=[
 	'image/background/taoyuan_bg.jpg',
 	'image/background/yinxiang_bg.jpg',
 	'image/background/zhanhuo_bg.jpg',
-	'image/background/zhulin_bg.jpg',
+	'image/background/zhulin_bg.jpg',	
 	'image/background/beipan_bg.jpg',
 	'image/background/lanting_bg.jpg',
 	'image/background/lingju_bg.jpg',
@@ -4655,6 +4630,10 @@ window.noname_asset_list=[
 	'image/card/sanlve.png',
 	'image/card/zhaogujing.png',
 	'image/card/changandajian_equip1.png',
+	'image/card/lukai_club.png',
+	'image/card/lukai_diamond.png',
+	'image/card/lukai_heart.png',
+	'image/card/lukai_spade.png',
 
 	'image/card/bagua.png',
 	'image/card/baihupifeng.png',
@@ -4982,7 +4961,7 @@ window.noname_asset_list=[
 	'image/card/zixin.png',
 	'image/card/ziyangdan.png',
 	'image/card/zong.png',
-
+	
 	'image/card/caochuan.png',
 	'image/card/jiejia.png',
 	'image/card/jinhe.png',
@@ -5044,7 +5023,7 @@ window.noname_asset_list=[
 	'image/card/zhuangshu_basic.png',
 	'image/card/zhuangshu_trick.png',
 	'image/card/zhuangshu_equip.png',
-
+	
 	'image/character/shenpei.jpg',
 	'image/character/re_menghuo.jpg',
 	'image/character/re_zhurong.jpg',
@@ -5604,7 +5583,7 @@ window.noname_asset_list=[
 	'image/character/tw_caozhao.jpg',
 	'image/character/tw_guohuai.jpg',
 	'image/character/wufan.jpg',
-	'image/character/yanfuren.jpg',
+	'image/character/yanfuren.jpg',	
 	'image/character/dc_jiben.jpg',
 	'image/character/jin_jiachong.jpg',
 	'image/character/licaiwei.jpg',
@@ -5669,7 +5648,13 @@ window.noname_asset_list=[
 	'image/character/zhangxun.jpg',
 	'image/character/zhaoang.jpg',
 	'image/character/zhaoyǎn.jpg',
-
+	'image/character/caoxiancaohua.jpg',
+	'image/character/dc_liuba.jpg',
+	'image/character/key_seira.jpg',
+	'image/character/lukai.jpg',
+	'image/character/prp_zhugeliang.jpg',
+	'image/character/xiahoulingnv.jpg',
+	
 	'image/character/baiwuchang.jpg',
 	'image/character/baosanniang.jpg',
 	'image/character/beimihu.jpg',
@@ -6534,7 +6519,7 @@ window.noname_asset_list=[
 	'image/character/zoushi.jpg',
 	'image/character/zumao.jpg',
 	'image/character/zuoci.jpg',
-
+	
 	'image/emotion/shibing_emotion/1.gif',
 	'image/emotion/shibing_emotion/2.gif',
 	'image/emotion/shibing_emotion/3.gif',
@@ -6676,7 +6661,7 @@ window.noname_asset_list=[
 	'image/emotion/throw_emotion/wine2.png',
 	'image/emotion/throw_emotion/yuxisx1.png',
 	'image/emotion/throw_emotion/yuxisx2.png',
-
+	
 	'image/mode/boss/card/chixueqingfeng.png',
 	'image/mode/boss/card/chiyanzhenhunqin.png',
 	'image/mode/boss/card/guilongzhanyuedao.png',
@@ -6701,7 +6686,7 @@ window.noname_asset_list=[
 	'image/mode/boss/card/shanrangzhaoshu.png',
 	'image/mode/boss/card/xingtianpojunfu.png',
 	'image/mode/boss/card/niaobaidaowenha.png',
-
+	
 	'image/mode/boss/character/boss_bianchengwang.jpg',
 	'image/mode/boss/character/boss_chujiangwang.jpg',
 	'image/mode/boss/character/boss_dushiwang.jpg',
@@ -6714,7 +6699,7 @@ window.noname_asset_list=[
 	'image/mode/boss/character/boss_zhuanlunwang.jpg',
 	'image/mode/boss/character/boss_dizangwang.jpg',
 	'image/mode/boss/character/boss_mengpo.jpg',
-
+	
 	'image/mode/boss/character/boss_xiangliu.jpg',
 	'image/mode/boss/character/boss_zhuyan.jpg',
 	'image/mode/boss/character/boss_bifang.jpg',
