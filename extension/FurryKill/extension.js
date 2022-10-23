@@ -18,6 +18,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         return '吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；<span class="bluetext">② ：获得其装备区里的一张牌并使用之；</span>③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。';
       return '吟唱，转换技，其他角色的准备阶段，你可以① ：视为对其使用一张铁索连环并对其造成一点火焰伤害；② ：获得其装备区里的一张牌并使用之；<span class="bluetext">③ ：视为对其使用一张杀，若此杀造成伤害，你恢复一点体力。</span>';
     },
+    furrykill_suqing: function (player) {
+      if (player.storage.furrykill_suqing) return '出牌阶段开始时，你可以选择一名角色，弃置其每个区域内的一张牌。此阶段结束时，若你未对其造成伤害，你失去一点体力。';
+      return '锁定技，出牌阶段开始时，你选择一名体力值不大于你的角色，然后弃置其每个区域内的一张牌。此回合结束时，若你未对其造成伤害，你失去一点体力。';
+    },
   }
   return {
     name: "FurryKill", editable: false, content: function (config, pack) {
@@ -575,6 +579,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
         lib.dynamicTranslate["furrykill_qianlie"] = dynamicTranslate.furrykill_qianlie;
         lib.dynamicTranslate["furrykill_chengming"] = dynamicTranslate.furrykill_chengming;
+        lib.dynamicTranslate["furrykill_sanyuan"] = dynamicTranslate.furrykill_sanyuan;
+        lib.dynamicTranslate["furrykill_suqing"] = dynamicTranslate.furrykill_suqing;
 
         lib.characterReplace["furrykill_yongshi"] = ["furrykill_yongshi", "sp_furrykill_yongshi"];
 
@@ -767,7 +773,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 "male",
                 "furrykill_fox",
                 3,
-                ["furrykill_jiyin", "furrykill_liushui"],
+                ["furrykill_jiyin", "furrykill_qingquan"],
                 ["des:南蛮入侵"],
               ],
               furrykill_halifax: [
@@ -819,6 +825,48 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_qianmeng", "furrykill_zheyue"],
                 ["des:小心玻璃"],
               ],
+              furrykill_wanen: [
+                "male",
+                "furrykill_wolf",
+                4,
+                ["furrykill_suqing", "furrykill_shenfu"],
+                [],
+              ],
+              furrykill_mingyu: [
+                "male",
+                "furrykill_cat",
+                4,
+                ["furrykill_enze", "furrykill_jianglin"],
+                ["des:紫色大松鼠"],
+              ],
+              furrykill_mingyu_evil: [
+                "male",
+                "furrykill_cat",
+                5,
+                ["furrykill_quanneng1", "furrykill_quanneng2", "furrykill_quanneng3"],
+                ["boss", "des:紫色大恶魔"],
+              ],
+              furrykill_moling: [
+                "male",
+                "furrykill_cat",
+                4,
+                ["furrykill_xingzhou", "furrykill_xingzhan", "furrykill_xinggong"],
+                ["des:占星术士"],
+              ],
+              furrykill_yunlan: [
+                "male",
+                "furrykill_fox",
+                4,
+                ["furrykill_zhengfa", "furrykill_shouxiang"],
+                ["des:大将军"],
+              ],
+              furrykill_zhanhou: [
+                "male",
+                "furrykill_dragon",
+                3,
+                ["furrykill_shunshan", "furrykill_yixing"],
+                ["des:粘钩"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -846,6 +894,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_yueling: "月凌",
               furrykill_wenhaowenhao: "？？",
               furrykill_han: "涵",
+              furrykill_wanen: "万恩",
+              furrykill_mingyu: "冥榆",
+              furrykill_mingyu_evil: "恶魔",
+              furrykill_moling: "默灵",
+              furrykill_yunlan: "云岚",
+              furrykill_zhanhou: "战吼",
             },
           },
           characterTitle: {
@@ -1953,6 +2007,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 content: function () {
                   'step 0';
                   var dice = get.number(trigger.card);
+                  if (dice == null) dice = -1;
                   var skip = player.storage.furrykill_dielang == 0;
                   var drop = dice <= player.storage.furrykill_dielang;
                   player.storage.furrykill_dielang = dice;
@@ -3036,14 +3091,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 }
               },
 
-              furrykill_liushui: {
+              furrykill_qingquan: {
                 trigger: {
                   player: "damageEnd",
                 },
                 frequent: true,
                 popup: false,
                 filter: function (event, player) {
-                  return !player.hasSkill('furrykill_liushui_used');
+                  return !player.hasSkill('furrykill_qingquan_used');
                 },
                 content: function () {
                   'step 0';
@@ -3055,7 +3110,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (result.index == 2) {
                     event.finish();
                   } else if (result.index == 0) {
-                    player.chooseTarget("流水：令至多两名角色分别摸一张牌。", [1, 2], function (card, player, target) {
+                    player.chooseTarget("清泉：令至多两名角色分别摸一张牌。", [1, 2], function (card, player, target) {
                       return true;
                     }, function (target) {
                       if (player == target) return 10;
@@ -3067,14 +3122,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 2';
                   if (result.bool) {
                     game.asyncDraw(result.targets);
-                    player.addTempSkill('furrykill_liushui_used');
-                    player.logSkill('furrykill_liushui');
+                    player.addTempSkill('furrykill_qingquan_used');
+                    player.logSkill('furrykill_qingquan');
                     event.finish();
                   } else {
                     event.goto(0);
                   }
                   'step 3';
-                  player.chooseTarget("流水：令攻击范围内的一名其他角色恢复一点体力。", function (card, player, target) {
+                  player.chooseTarget("清泉：令攻击范围内的一名其他角色恢复一点体力。", function (card, player, target) {
                     return target != player && player.inRange(target);
                   }).set('ai', function (target) {
                     if (target == player) {
@@ -3085,8 +3140,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   });
                   'step 4';
                   if (result.bool && result.targets && result.targets.length) {
-                    player.addTempSkill('furrykill_liushui_used');
-                    player.logSkill('furrykill_liushui');
+                    player.addTempSkill('furrykill_qingquan_used');
+                    player.logSkill('furrykill_qingquan');
                     result.targets[0].recover();
                   } else {
                     event.goto(0);
@@ -3938,6 +3993,991 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_suqing: {
+                init: function (player) {
+                  player.storage.furrykill_suqing = false;
+                  player.storage.furrykill_suqing2 = false;
+                },
+                trigger: { player: 'phaseUseBegin' },
+                locked: function (skill, player) {
+                  if (!player || !player.storage.furrykill_suqing) return true;
+                  return false;
+                },
+                direct: true,
+                prompt2: function (event, player) {
+                  if (player.storage.furrykill_suqing) return '出牌阶段开始时，你可以选择一名角色，弃置其每个区域内的一张牌。此阶段结束时，若你未对其造成伤害，你失去一点体力。';
+                  return '锁定技，出牌阶段开始时，你选择一名体力值不大于你的角色，然后弃置其每个区域内的一张牌。此回合结束时，若你未对其造成伤害，你失去一点体力。';
+                },
+                content: function () {
+                  'step 0';
+                  player.chooseTarget(!player.storage.furrykill_suqing,
+                    function (card, player, target) {
+                      return player.storage.furrykill_suqing || target.hp <= player.hp;
+                    }
+                  ).set('prompt', get.prompt('furrykill_suqing')).set('ai', function (target) {
+                    return -get.attitude(player, target);
+                  });
+                  'step 1';
+                  if (!result.bool) {
+                    event.finish();
+                  } else {
+                    event.target = result.targets[0];
+                    event.dropCards = [];
+                    player.logSkill('furrykill_suqing', event.target);
+                  }
+                  'step 2';
+                  if (event.target.countCards('h') > 0) {
+                    event.bool = true;
+                    player.choosePlayerCard(event.target, true, 'h',
+                      "肃清：弃置" + get.translation(event.target) + "手牌区一张牌");
+                  } else {
+                    event.bool = false;
+                  }
+                  'step 3';
+                  if (event.bool && result.bool) {
+                    event.dropCards.push(result.cards[0]);
+                  }
+                  'step 4';
+                  if (event.target.countCards('e') > 0) {
+                    event.bool = true;
+                    player.choosePlayerCard(event.target, true, 'e',
+                      "肃清：弃置" + get.translation(event.target) + "装备区一张牌");
+                  } else {
+                    event.bool = false;
+                  }
+                  'step 5';
+                  if (event.bool && result.bool) {
+                    event.dropCards.push(result.cards[0]);
+                  }
+                  'step 6';
+                  if (event.target.countCards('j') > 0) {
+                    event.bool = true;
+                    player.choosePlayerCard(event.target, true, 'j',
+                      "肃清：弃置" + get.translation(event.target) + "判定区一张牌");
+                  } else {
+                    event.bool = false;
+                  }
+                  'step 7';
+                  if (event.bool && result.bool) {
+                    event.dropCards.push(result.cards[0]);
+                  }
+                  'step 8';
+                  if (event.dropCards.length != 0) {
+                    if (player != event.target)
+                      player.storage.furrykill_suqing2 = true;
+                    event.target.discard(event.dropCards);
+                  }
+                  'step 9';
+                  player.storage.furrykill_suqing_order = event.target;
+                  player.storage.furrykill_suqing_damage = true;
+                  player.addTempSkill('furrykill_suqing_order');
+                  player.addTempSkill('furrykill_suqing_damage');
+                },
+                subSkill: {
+                  order: {
+                    charlotte: true,
+                    trigger: {
+                      source: "damageAfter",
+                    },
+                    direct: true,
+                    priority: 2,
+                    filter: function (event, player) {
+                      return player.storage.furrykill_suqing_order == event.player
+                        && player.storage.furrykill_suqing_damage;
+                    },
+                    content: function () {
+                      player.storage.furrykill_suqing_damage = false;
+                    },
+                    onremove: function (player, skill) {
+                      player.storage.furrykill_suqing_order = undefined;
+                    },
+                    sub: true,
+                  },
+                  damage: {
+                    direct: true,
+                    trigger: { player: 'phaseEnd' },
+                    filter: function (event, player) {
+                      return player.storage.furrykill_suqing_damage;
+                    },
+                    content: function () {
+                      player.loseHp();
+                      player.logSkill('furrykill_suqing');
+                    },
+                    onremove: function (player, skill) {
+                      player.storage.furrykill_suqing_damage = undefined;
+                    },
+                    sub: true,
+                  }
+                }
+              },
+
+              furrykill_shenfu: {
+                skillAnimation: true,
+                animationColor: 'thunder',
+                unique: true,
+                juexingji: true,
+                audio: 2,
+                trigger: { player: 'dying' },
+                forced: true,
+                filter: function (event, player) {
+                  return !player.storage.furrykill_suqing;
+                },
+                content: function () {
+                  "step 0";
+                  player.loseMaxHp();
+                  player.recover(2);
+                  "step 1";
+                  player.addSkill('furrykill_zhiguang');
+                  player.storage.furrykill_suqing = true;
+                  player.awakenSkill('furrykill_shenfu');
+                  "step 2";
+                  if (player.storage.furrykill_suqing2 == false) {
+                    player.draw(4);
+                    player.addSkill('furrykill_shenfu2');
+                  }
+                },
+              },
+              furrykill_shenfu2: {
+                charlotte: true,
+                mod: {
+                  cardUsable: function (card, player, num) {
+                    if (card.name == 'sha') return num + 1;
+                  },
+                },
+              },
+
+              furrykill_zhiguang: {
+                mod: {
+                  targetInRange: function (card, player, target) {
+                    if (player.storage.furrykill_suqing_order == target) {
+                      return true;
+                    }
+                  },
+                },
+                trigger: {
+                  source: "damageAfter",
+                },
+                frequent: true,
+                priority: 1,
+                filter: function (event, player) {
+                  if (player.storage.furrykill_suqing_order == undefined) return false;
+                  return player.storage.furrykill_suqing_order == event.player;
+                },
+                content: function () {
+                  player.draw();
+                },
+              },
+
+              furrykill_enze: {
+                trigger: {
+                  player: "phaseBefore",
+                },
+                content: function () {
+                  "step 0";
+                  var list = ["开眼", "沟通", "献祭", '退缩'];
+
+                  event.mozhen = player.getExpansions('furrykill_enze');
+                  if (event.mozhen.length == 0) {
+                    list.remove('沟通');
+                    list.remove('退缩');
+                  }
+                  if (player.countCards('h') == 0) {
+                    list.remove('沟通');
+                    list.remove('献祭');
+                  }
+
+                  player.chooseControl(list, true, function () {
+                    return "开眼";
+                  }).set('prompt', '开眼，将牌堆顶的一张牌置入【魔阵】中，本回合你获得【真瞳】；</br>沟通，交换手牌和【魔阵】中的一张牌，本回合你获得【八爪】；</br>献祭，将一张手牌置入【魔阵】中，本回合你获得【秽咒】；</br>退缩，获得【魔阵】中的一张牌。');
+                  "step 1";
+                  if (result.control == "开眼") {
+                    player.addToExpansion('furrykill_enze', get.cards()).gaintag.add('furrykill_enze');
+                    player.addTempSkill('furrykill_quanneng1');
+                    event.finish();
+                  } else if (result.control == "沟通") {
+                    player.addTempSkill('furrykill_quanneng2');
+                    event.goto(3);
+                  } else if (result.control == "献祭") {
+                    player.addTempSkill('furrykill_quanneng3');
+                    event.goto(6);
+                  } else {
+                    player.chooseButton(true, ['获得【魔阵】中的一张牌', event.mozhen])
+                      .set('filterButton', function (button) {
+                        return ui.selected.buttons.length == 0;
+                      }).set('ai', function (button) {
+                        return 10 - get.value(button.link);
+                      }).set('cards', event.mozhen);
+                  }
+                  "step 2";
+                  if (result.bool && result.links) {
+                    player.gain(result.links);
+                    event.finish();
+                  }
+                  "step 3";
+                  player.chooseButton(true, ['选择【魔阵】中的一张牌', event.mozhen])
+                    .set('filterButton', function (button) {
+                      return ui.selected.buttons.length == 0;
+                    }).set('ai', function (button) {
+                      return 10 - get.value(button.link);
+                    }).set('cards', event.mozhen);
+                  "step 4";
+                  if (result.bool && result.links) {
+                    var card = result.links[0];
+                    player.gain(card);
+                    player.chooseCard('h', true, '选择一张作为交换的手牌', function (c) {
+                      return card != c;
+                    });
+                  }
+                  "step 5";
+                  if (result.bool) {
+                    var cs = result.cards;
+                    player.addToExpansion('furrykill_enze', cs).gaintag.add('furrykill_enze');
+                    event.finish();
+                  }
+                  "step 6";
+                  player.chooseCard('h', true, '将一张手牌置入【魔阵】中');
+                  "step 7";
+                  if (result.bool) {
+                    var cs = result.cards;
+                    player.addToExpansion('furrykill_enze', cs).gaintag.add('furrykill_enze');
+                  }
+                },
+                intro: {
+                  content: 'expansion',
+                  markcount: 'expansion',
+                },
+                marktext: '魔阵',
+                onremove: function (player, skill) {
+                  var cards = player.getExpansions("furrykill_enze");
+                  if (cards.length) player.loseToDiscardpile(cards);
+                },
+              },
+
+              furrykill_jianglin: {
+                mode: ['identity', 'versus', 'doudizhu'],
+                init: function (player) {
+                  player.storage.furrykill_jianglin_kill = false;
+                  player.storage.furrykill_jianglin_damage = 0;
+                  player.storage.furrykill_jianglin = false;
+                },
+                skillAnimation: true,
+                animationColor: 'thunder',
+                unique: true,
+                juexingji: true,
+                audio: 2,
+                trigger: { player: 'phaseEnd' },
+                priority: 1,
+                forced: true,
+                filter: function (event, player) {
+                  if (!player.storage.furrykill_jianglin_kill) return false;
+                  if (player.storage.furrykill_jianglin_damage < 4) return false;
+                  var cards = player.getExpansions("furrykill_enze");
+                  if (cards.length != 4) return false;
+                  var ary = [];
+                  for (var i = 0; i < cards.length; i++) {
+                    var suit = get.suit(cards[i]);
+                    if (ary.contains(suit)) {
+                      return false;
+                    }
+                    ary.push(suit);
+                  }
+                  return true;
+                },
+                content: function () {
+                  "step 0";
+                  player.init('furrykill_mingyu_evil');
+                  player.update();
+                  ui.clear();
+                  "step 1";
+                  player.discard(player.getCards('hej'));
+                  "step 2";
+                  player.draw(4);
+                  player.addSkill("furrykill_quanneng_kill");
+                  "step 3";
+                  if (_status.mode == 'two') {
+                    game.broadcastAll(function (player) {
+                      game.countPlayer(function (current) {
+                        if (current != player) {
+                          current.side = false;
+                        }
+                      });
+                      player.side = true;
+                    }, player);
+                    for (var i = 0; i < game.players.length; i++) {
+                      if (game.players[i].side == game.me.side) {
+                        game.players[i].node.identity.firstChild.innerHTML = '友';
+                      }
+                      else {
+                        game.players[i].node.identity.firstChild.innerHTML = '敌';
+                      }
+                      game.players[i].node.identity.dataset.color = game.players[i].side + 'zhu';
+                    }
+                  } else {
+                    game.broadcastAll(function (player) {
+                      game.countPlayer(function (current) {
+                        if (current.isZhu) {
+                          delete current.isZhu;
+                        }
+                        if (current != player) {
+                          current.identity = 'fan';
+                          current.showIdentity();
+                        }
+                      });
+                      player.identity = 'zhu';
+                      game.zhu = player;
+                      player.showIdentity();
+                    }, player);
+                    event.trigger('zhuUpdate');
+                  }
+                  "step 4";
+                  while (_status.event.name != 'phaseLoop') {
+                    _status.event = _status.event.parent;
+                  }
+                  _status.paused = false;
+                  _status.event.player = player;
+                  _status.event.step = 0;
+                  if (game.bossinfo) {
+                    game.bossinfo.loopType = 1;
+                    _status.roundStart = game.boss;
+                  }
+                },
+                group: ['furrykill_jianglin_kill', 'furrykill_jianglin_damage'],
+                subSkill: {
+                  kill: {
+                    trigger: {
+                      global: "die",
+                    },
+                    direct: true,
+                    charlotte: true,
+                    priority: 5,
+                    filter: function (event, player) {
+                      return event.source == player;
+                    },
+                    content: function () {
+                      player.storage.furrykill_jianglin_kill = true;
+                    },
+                    sub: true,
+                  },
+                  damage: {
+                    trigger: {
+                      source: "damageAfter",
+                    },
+                    direct: true,
+                    charlotte: true,
+                    priority: 5,
+                    filter: function (event, player) {
+                      return player.storage.furrykill_jianglin_damage < 4;
+                    },
+                    content: function () {
+                      player.storage.furrykill_jianglin_damage += trigger.num;
+                    },
+                    sub: true,
+                  },
+                }
+              },
+
+              furrykill_quanneng: {
+                group: ['furrykill_quanneng1', 'furrykill_quanneng2', 'furrykill_quanneng3']
+              },
+              furrykill_quanneng1: {
+                trigger: {
+                  player: "phaseBegin",
+                },
+                prompt2: "准备阶段，你可以发现一张牌。",
+                content: function () {
+                  'step 0';
+                  var cards = get.cards(3);
+                  if (cards.length == 0) event.finish();
+                  var next = player.furrykillDiscoverCard('真瞳：发现一张牌', cards, true);
+                  next.set("gotoOrdering", true);
+                  "step 1";
+                  var card = result.card;
+                  player.gain(card, "draw");
+                  game.log(player, '从牌堆发现了', card);
+                }
+              },
+              furrykill_quanneng2: {
+                trigger: {
+                  player: "useCardToTarget",
+                },
+                prompt2: "出牌阶段，你使用的黑色牌可以额外指定一个目标。",
+                direct: true,
+                filter: function (event, player) {
+                  if (_status.currentPhase != player) return false;
+                  var card = event.card;
+                  var info = get.info(card);
+                  if (get.color(card) != 'black') return false;
+                  if (!event.isFirstTarget) return false;
+                  if (info.allowMultiple == false) return false;
+                  if (event.targets && !info.multitarget) {
+                    if (game.hasPlayer(function (current) {
+                      return !event.targets.contains(current) && lib.filter.targetEnabled2(event.card, event.player, current);
+                    })) {
+                      return true;
+                    }
+                  }
+                  return false;
+                },
+                content: function () {
+                  'step 0'
+                  var prompt2 = '为' + get.translation(trigger.card) + '额外指定一名角色成为目标'
+                  player.chooseTarget(get.prompt2('furrykill_quanneng2'), function (card, player, target) {
+                    var player = _status.event.source;
+                    return !_status.event.targets.contains(target) && lib.filter.targetEnabled2(_status.event.card, player, target);
+                  }).set('prompt2', prompt2).set('ai', function (target) {
+                    var trigger = _status.event.getTrigger();
+                    var player = _status.event.source;
+                    return get.effect(target, trigger.card, player, _status.event.player);
+                  }).set('targets', trigger.targets).set('card', trigger.card).set('source', trigger.player);
+                  'step 1'
+                  if (result.bool) {
+                    if (!event.isMine() && !event.isOnline()) game.delayx();
+                    event.targets = result.targets;
+                  }
+                  else {
+                    event.finish();
+                  }
+                  'step 2'
+                  if (event.targets) {
+                    player.logSkill('furrykill_quanneng2', event.targets);
+                    trigger.targets.addArray(event.targets);
+                    game.log(event.targets, '也成为了', trigger.card, '的目标');
+                  }
+                },
+              },
+              furrykill_quanneng3: {
+                trigger: {
+                  player: "phaseEnd",
+                },
+                direct: true,
+                priority: 100,
+                prompt2: "结束阶段，你可以造成一点伤害。",
+                content: function () {
+                  "step 0";
+                  player.chooseTarget(get.prompt2('furrykill_quanneng3')).ai = function (target) {
+                    var bool = get.attitude(player, target) > 0;
+                    return get.damageEffect(target, player, player) - (bool ? 1 : 0);
+                  };
+                  "step 1";
+                  var target = result.targets[0];
+                  player.logSkill('furrykill_quanneng3', target);
+                  target.damage();
+                },
+              },
+
+              furrykill_quanneng_kill: {
+                trigger: {
+                  global: "die",
+                },
+                direct: true,
+                charlotte: true,
+                priority: 100,
+                filter: function (event, player) {
+                  return event.source == player && event.player != player;
+                },
+                content: function () {
+                  'step 0';
+                  if (get.mode() == 'identity') {
+                    game.broadcastAll(function () {
+                      trigger.player.identity = 'nei';
+                      trigger.player.showIdentity();
+                    });
+                  }
+                  player.draw(2);
+                  'step 1';
+                  if (game.countPlayer() == 1) {
+                    if (_status.mode == 'two') {
+                      game.over(true);
+                    } else {
+                      game.over(game.me.identity == 'zhu');
+                    }
+                  }
+                },
+                group: ['furrykill_quanneng_kill_self'],
+                subSkill: {
+                  self: {
+                    trigger: {
+                      player: "die",
+                    },
+                    direct: true,
+                    charlotte: true,
+                    priority: 10,
+                    forceDie: true,
+                    content: function () {
+                      if (_status.mode == 'two') {
+                        game.over(false);
+                      } else {
+                        game.over(game.me.identity == 'zhu');
+                      }
+                    },
+                    sub: true,
+                  }
+                }
+              },
+
+              furrykill_xingzhou: {
+                lock: true,
+                enable: "phaseUse",
+                filterCard: function (card, player) {
+                  return card.name == 'tao';
+                },
+                filterTarget: function (card, player, target) {
+                  return player != target && lib.filter.cardEnabled({ name: 'tao' }, target, target);
+                },
+                discard: false,
+                lose: false,
+                filter: function (event, player) {
+                  return player.hasCard('tao');
+                },
+                prompt: "你可以对其他角色使用桃",
+                content: function () {
+                  player.useCard(cards, targets[0]).animate = false;
+                },
+                ai: {
+                  order: 9.5,
+                  result: {
+                    target: function (player, target) {
+                      return get.recoverEffect(target, player, target);
+                    },
+                  },
+                  threaten: 3,
+                },
+                group: ['furrykill_xingzhou_use', 'furrykill_xingzhou_recover'],
+                subSkill: {
+                  use: {
+                    trigger: { player: 'useCardToTargeted' },
+                    direct: true,
+                    filter: function (event, player) {
+                      return player != event.target && event.card.name == 'tao';
+                    },
+                    content: function () {
+                      player.draw();
+                    },
+                    sub: true,
+                  },
+                  recover: {
+                    trigger: { global: "recoverEnd" },
+                    direct: true,
+                    filter: function (event, player) {
+                      var evt = event.getParent("furrykill_xingzhou_after");
+                      if (evt && evt.name == "furrykill_xingzhou_after") {
+                        return false;
+                      }
+                      return player == event.source;
+                    },
+                    content: function () {
+                      trigger.player.addSkill('furrykill_xingzhou_after');
+                    },
+                    sub: true,
+                  },
+                }
+              },
+              furrykill_xingzhou_after: {
+                trigger: { player: 'phaseEnd' },
+                charlotte: true,
+                direct: true,
+                priority: 201,
+                content: function () {
+                  if (!player.isHealthy()) {
+                    player.logSkill('furrykill_xingzhou');
+                    player.recover();
+                  }
+                  player.removeSkill('furrykill_xingzhou_after');
+                },
+              },
+
+              furrykill_xingzhan: {
+                enable: "phaseUse",
+                usable: 1,
+                unique: true,
+                content: function () {
+                  'step 0';
+                  player.draw();
+                  'step 1';
+                  player.chooseTarget(true,
+                    function (card, player, target) {
+                      return true;
+                    }
+                  ).set('prompt', get.prompt('furrykill_xingzhan')).set('ai', function (target) {
+                    return get.attitude(player, target);
+                  });
+                  'step 2';
+                  if (result.bool) {
+                    event.target = result.targets[0];
+                    player.chooseCard('he', true, '选择一张牌作为“星”');
+                  }
+                  'step 3';
+                  if (result.bool) {
+                    var cs = result.cards;
+                    event.target.addToExpansion(cs, player, 'give').gaintag.add('furrykill_xingzhan_star');
+                    if (!event.target.hasSkill('furrykill_xingzhan_star'))
+                      event.target.addSkill('furrykill_xingzhan_star');
+                  }
+                  'step 4';
+                  var stars = 0;
+                  var players = game.filterPlayer(p => p.hasSkill('furrykill_xingzhan_star'));
+                  players.forEach(p => {
+                    stars += p.getExpansions("furrykill_xingzhan_star").length;
+                  });
+                  if (stars > 3) {
+                    player.chooseTarget(true, '选择一个目标移去一个“星”',
+                      function (card, player, target) {
+                        return players.contains(target);
+                      }
+                    ).set('ai', function (target) {
+                      return -get.attitude(player, target);
+                    });
+                  } else {
+                    event.finish();
+                  }
+                  'step 5';
+                  if (result.bool) {
+                    event.target = result.targets[0];
+                    var starArray = event.target.getExpansions("furrykill_xingzhan_star");
+                    if (starArray.length == 1) {
+                      event.target.removeSkill('furrykill_xingzhan_star');
+                      event.finish();
+                    } else {
+                      player.chooseButton(true, ['移去一个“星”', starArray])
+                        .set('filterButton', function (button) {
+                          return ui.selected.buttons.length == 0;
+                        }).set('ai', function (button) {
+                          return 10 - get.value(button.link);
+                        }).set('cards', starArray);
+                    }
+                  }
+                  'step 6';
+                  if (result.bool && result.links) {
+                    event.target.loseToDiscardpile(result.links);
+                  }
+                },
+              },
+              furrykill_xingzhan_star: {
+                init2: function (player) {
+                  player.storage.furrykill_xingzhan_star_black = 0;
+                  player.storage.furrykill_xingzhan_star_red = 0;
+                },
+                charlotte: true,
+                intro: {
+                  content: "expansion",
+                  markcount: "expansion",
+                },
+                marktext: "星",
+                onremove: function (player, skill) {
+                  delete player.storage.furrykill_xingzhan_star_black;
+                  delete player.storage.furrykill_xingzhan_star_red;
+                  var cards = player.getExpansions("furrykill_xingzhan_star");
+                  if (cards.length) player.loseToDiscardpile(cards);
+                },
+                group: [
+                  'furrykill_xingzhan_star_black',
+                  'furrykill_xingzhan_star_red',
+                  'furrykill_xingzhan_star_reset'
+                ],
+                subSkill: {
+                  black: {
+                    trigger: { source: "damageBegin2" },
+                    direct: true,
+                    priority: 4,
+                    filter: function (event, player) {
+                      var cards = player.getExpansions("furrykill_xingzhan_star");
+                      if (!cards.some(c => get.color(c) == 'black')) return false;
+
+                      var limit = 1;
+                      var basic = false;
+                      var trick = false;
+                      var equip = false;
+                      var players = game.filterPlayer(p => p.hasSkill('furrykill_xingzhan_star'));
+                      players.forEach(p => {
+                        p.getExpansions("furrykill_xingzhan_star").forEach(c => {
+                          switch (get.type(c, 'trick')) {
+                            case 'basic':
+                              basic = true;
+                              break;
+                            case 'trick':
+                              trick = true;
+                              break;
+                            case 'equip':
+                              equip = true;
+                              break;
+                          }
+                        });
+                      });
+                      if (basic && trick && equip) limit = 2;
+                      if (player.storage.furrykill_xingzhan_star_black >= limit) return false;
+
+                      return player == event.player || get.distance(player, event.player) <= 1;
+                    },
+                    content: function () {
+                      player.draw();
+                      player.storage.furrykill_xingzhan_star_black++;
+                    },
+                    sub: true,
+                  },
+                  red: {
+                    trigger: { source: "damageBegin2" },
+                    direct: true,
+                    priority: 4,
+                    filter: function (event, player) {
+                      var cards = player.getExpansions("furrykill_xingzhan_star");
+                      if (!cards.some(c => get.color(c) == 'red')) return false;
+
+                      var limit = 1;
+                      var basic = false;
+                      var trick = false;
+                      var equip = false;
+                      var players = game.filterPlayer(p => p.hasSkill('furrykill_xingzhan_star'));
+                      players.forEach(p => {
+                        p.getExpansions("furrykill_xingzhan_star").forEach(c => {
+                          switch (get.type(c, 'trick')) {
+                            case 'basic':
+                              basic = true;
+                              break;
+                            case 'trick':
+                              trick = true;
+                              break;
+                            case 'equip':
+                              equip = true;
+                              break;
+                          }
+                        });
+                      });
+                      if (basic && trick && equip) limit = 2;
+                      if (player.storage.furrykill_xingzhan_star_red >= limit) return false;
+
+                      return get.distance(player, event.player) > 1;
+                    },
+                    content: function () {
+                      player.draw();
+                      player.storage.furrykill_xingzhan_star_red++;
+                    },
+                    sub: true,
+                  },
+                  reset: {
+                    trigger: { global: "phaseEnd" },
+                    direct: true,
+                    priority: 4,
+                    content: function () {
+                      player.storage.furrykill_xingzhan_star_black = 0;
+                      player.storage.furrykill_xingzhan_star_red = 0;
+                    },
+                    sub: true,
+                  },
+                },
+              },
+
+              furrykill_xinggong: {
+                init: function (player) {
+                  player.storage.furrykill_xinggong = false;
+                },
+                unique: true,
+                enable: "phaseUse",
+                skillAnimation: true,
+                animationColor: "thunder",
+                limited: true,
+                filter: function (event, player) {
+                  return !player.storage.furrykill_xinggong
+                    && game.filterPlayer(p =>
+                      p.hasSkill('furrykill_xingzhan_star')
+                      && !p.isHealthy()
+                    ).length > 0;
+                },
+                content: function () {
+                  'step 0';
+                  player.awakenSkill('furrykill_xinggong');
+                  player.storage.furrykill_xinggong = true;
+                  event.players = game.filterPlayer(p =>
+                    p.hasSkill('furrykill_xingzhan_star')
+                    && !p.isHealthy()
+                  );
+                  event.num = 0;
+                  'step 1';
+                  event.players[event.num].recover();
+                  'step 2';
+                  event.num++;
+                  if (event.num < event.players.length) event.goto(1);
+                },
+                mark: true,
+                intro: {
+                  content: "limited",
+                },
+              },
+
+              furrykill_zhengfa: {
+                init: function (player) {
+                  player.storage.furrykill_zhengfa = 0;
+                },
+                audio: 2,
+                enable: "phaseUse",
+                position: "he",
+                filterCard: true,
+                selectCard: function () {
+                  var player = _status.event.player;
+                  if (player.hp == player.storage.furrykill_zhengfa) return 0;
+                  return player.storage.furrykill_zhengfa;
+                },
+                check: function (card) {
+                  return 5 - get.value(card)
+                },
+                delay: false,
+                content: function () {
+                  player.draw();
+                  player.storage.furrykill_zhengfa += 1;
+                },
+                group: "furrykill_zhengfa_clear",
+                subSkill: {
+                  clear: {
+                    trigger: {
+                      player: "phaseBefore",
+                    },
+                    forced: true,
+                    silent: true,
+                    popup: false,
+                    content: function () {
+                      player.storage.furrykill_zhengfa = 0;
+                    },
+                    sub: true,
+                  },
+                },
+                ai: {
+                  order: 10,
+                  result: {
+                    player: 1,
+                  },
+                },
+              },
+
+              furrykill_shouxiang: {
+                audio: 2,
+                trigger: {
+                  target: "useCardToTargeted",
+                },
+                filter: function (event, player) {
+                  if (event.card.name != 'sha' && event.card.name != 'juedou') return false;
+                  return player.countCards('e') > 0;
+                },
+                content: function () {
+                  var cards = player.getCards('e');
+                  trigger.player.gain(cards, player, 'giveAuto');
+                  trigger.excluded.push(player);
+                },
+              },
+
+              furrykill_shunshan: {
+                group: ["furrykill_shunshan_wuxie"],
+                enable: "chooseToUse",
+                filter: function (event, player) {
+                  if (!player.countCards('hes', c => get.type(c) == 'equip')) return false;
+                  var list = ['sha', 'shan', 'tao', 'jiu'];
+                  for (var i = 0; i < list.length; i++) {
+                    if (event.filterCard({ name: list[i] }, player)) return true;
+                  }
+                  return false;
+                },
+                chooseButton: {
+                  dialog: function () {
+                    var list = [];
+                    for (var i = 0; i < lib.inpile.length; i++) {
+                      var name = lib.inpile[i];
+                      if (name == 'wuxie') continue;
+                      if (name == 'sha') {
+                        list.push(['基本', '', 'sha']);
+                        for (var j of lib.inpile_nature) list.push(['基本', '', 'sha', j]);
+                      }
+                      else if (get.type(name) == 'basic') list.push(['基本', '', name]);
+                    }
+                    return ui.create.dialog('瞬闪', [list, 'vcard'], 'hidden');
+                  },
+                  filter: function (button, player) {
+                    var evt = _status.event.getParent();
+                    if (evt && evt.filterCard) {
+                      return evt.filterCard({ name: button.link[2] }, player, evt);
+                    }
+                    return true;
+                  },
+                  backup: function (links, player) {
+                    return {
+                      filterCard: function (card) {
+                        return get.type(card) == 'equip';
+                      },
+                      selectCard: 1,
+                      position: 'hes',
+                      check: (card) => 8 - get.value(card),
+                      viewAs: { name: links[0][2], nature: links[0][3] },
+                    }
+                  },
+                  prompt: function (links, player) {
+                    return '将一张装备牌做当' + get.translation(links[0][2]) + '使用';
+                  },
+                },
+                ai: {
+                  save: true,
+                  respondShan: true,
+                  fireAttack: true,
+                  threaten: 1.2,
+                },
+              },
+              furrykill_shunshan_wuxie: {
+                log: false,
+                silent: true,
+                popup: false,
+                enable: "chooseToUse",
+                selectCard: 1,
+                position: 'hes',
+                filterCard: function (card) {
+                  return get.type(card) == 'equip';
+                },
+                viewAsFilter: function (player) {
+                  return player.countCards('hes', c => get.type(c) == 'equip') > 0
+                },
+                viewAs: {
+                  name: "wuxie",
+                },
+                check: function (card) {
+                  return 10;
+                },
+                prompt: "将一张装备牌当无懈可击使用",
+                threaten: 1.2,
+              },
+
+              furrykill_yixing: {
+                enable: "phaseUse",
+                usable: 1,
+                filterTarget: function (card, player, target) {
+                  return target != player && target.countCards('he') > 0;
+                },
+                content: function () {
+                  'step 0';
+                  event.originCount = player.countCards('h');
+                  player.choosePlayerCard(target, true, 'he');
+                  'step 1';
+                  if (result.bool) {
+                    event.cardx = result.cards[0];
+                    target.showCards(event.cardx);
+                  }
+                  else {
+                    event.finish();
+                  }
+                  'step 2';
+                  if (!target.canUse(event.cardx, player, null, true)) {
+                    player.gain(target, event.cardx);
+                  }
+                  else {
+                    target.useCard(event.cardx, player, false);
+                  }
+                  'step 3';
+                  if (player.countCards('h') == event.originCount) {
+                    player.getStat('skill').furrykill_yixing--;
+                  }
+                },
+                ai: {
+                  order: 5,
+                  result: {
+                    target: -1,
+                  },
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -4031,8 +5071,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_yongdai_info: "出牌阶段开始时，你可以展示手牌，然后指定至多三名其他角色，这些角色选择是否交给你一张牌。然后出牌阶段结束时，若你于此阶段造成了伤害，选择交给你牌的角色摸一张牌，选择不交给你牌的角色弃一张牌；若你没有造成伤害，选择交给你牌的角色弃一张牌，选择不交给你牌的角色摸一张牌。",
               furrykill_jiyin: "激音",
               furrykill_jiyin_info: "每回合限一次，你造成伤害后，可以选择一项：1、令至多两名角色分别弃置一张牌；2、令该角色攻击范围内的一名角色失去一点体力。",
-              furrykill_liushui: "流水",
-              furrykill_liushui_info: "每回合限一次，你受到伤害后，可以选择一项：1、令至多两名角色分别摸一张牌；2、令攻击范围内的一名其他角色恢复一点体力。",
+              furrykill_qingquan: "清泉",
+              furrykill_qingquan_info: "每回合限一次，你受到伤害后，可以选择一项：1、令至多两名角色分别摸一张牌；2、令攻击范围内的一名其他角色恢复一点体力。",
               furrykill_xiaoxue: "效学",
               furrykill_xiaoxue_info: "其他角色的回合限一次，一名色使用的基本牌或普通锦囊结算完毕后，若你没有同类别的明置牌，你可以弃置一张与之类别相同、牌名不同的暗置牌，获得此牌并明置。",
               furrykill_chengming: "澄明",
@@ -4063,12 +5103,53 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_qianmeng_info: "出牌阶段限一次，你可以选择至多两名其他角色，展示并分别交给这些角色一张牌。然后这些角色可以使用你给出的牌。",
               furrykill_zheyue: "遮月",
               furrykill_zheyue_info: "一名角色在其回合外使用杀或锦囊牌时，你可以令你或该角色摸一张牌。",
+              furrykill_suqing: "肃清",
+              furrykill_suqing_info: "锁定技，出牌阶段开始时，你选择一名体力值不大于你的角色，然后弃置其每个区域内的一张牌。此回合结束时，若你未对其造成伤害，你失去一点体力。",
+              furrykill_shenfu: "神赋",
+              furrykill_shenfu_info: "觉醒技，你濒死时，减少一点体力上限，恢复2点体力，获得执光，并修改肃清。若你没有因肃清弃置其他角色的牌，摸4张牌，且本局游戏中，你于出牌阶段使用杀的次数+1。",
+              furrykill_zhiguang: "执光",
+              furrykill_zhiguang_info: "你对肃清的角色使用牌没有距离限制，且对其造成伤害后，可以摸一张牌。",
+              furrykill_mozhen: "魔阵",
+              furrykill_enze: "恩泽",
+              furrykill_enze_info: "回合开始时，你可以选择一项：</br>开眼，将牌堆顶的一张牌置入【魔阵】中，本回合你获得【真瞳】；</br>沟通，交换手牌和【魔阵】中的一张牌，本回合你获得【八爪】；</br>献祭，将一张手牌置入【魔阵】中，本回合你获得【秽咒】；</br>退缩，获得【魔阵】中的一张牌。",
+              furrykill_jianglin: "降临",
+              furrykill_jianglin_info: "觉醒技，回合结束时，若你于本局游戏中至少击杀过一名角色，累计造成的伤害不少于4，且此时【魔阵】中的牌数量为4且花色各不相同，你化身为真正的恶魔，与其他所有人为敌。",
+              furrykill_quanneng: "权能",
+              furrykill_quanneng1: "真瞳",
+              furrykill_quanneng1_info: "准备阶段，你可以发现一张牌。",
+              furrykill_quanneng2: "八爪",
+              furrykill_quanneng2_info: "出牌阶段，你使用的黑色牌可以额外指定一个目标。",
+              furrykill_quanneng3: "秽咒",
+              furrykill_quanneng3_info: "结束阶段，你可以造成一点伤害。",
+              furrykill_quanneng_info: "1、准备阶段，你可以发现一张牌。</br>2、出牌阶段，你使用的黑色牌可以额外指定一个目标。</br>3、结束阶段，你可以造成一点伤害。",
+              furrykill_xingzhou: "星昼",
+              furrykill_xingzhou_info: "锁定技，因你回复体力的角色（此效果除外）在其下个回合的结束阶段回复一点体力；</br>出牌阶段，你可以对其他角色使用桃；</br>你对其他角色使用桃时，摸一张牌。",
+              furrykill_xingzhan: "星占",
+              furrykill_xingzhan_star: "星",
+              furrykill_xingzhan_info: "出牌阶段限一次，你可以摸一张牌，然后将一张牌置于一名角色的武将牌上，称为星，然后若星的数量大于3，移去一个星。</br>有黑色星的角色对距离为1以内的角色造成伤害时，摸一张牌；</br>有红色星的角色对距离大于1的角色造成伤害时，摸一张牌。</br>（每种效果每回合限一次，若场上有三种类别的星，将限一次改为限两次。）",
+              furrykill_xinggong: "星宫",
+              furrykill_xinggong_info: "限定技，出牌阶段，你可以令所有有星的角色恢复一点体力。",
+              furrykill_zhengfa: "征伐",
+              furrykill_zhengfa_info: "出牌阶段，你可以弃置X张牌，然后摸一张牌，若你的体力值等于X，你无需弃牌（X为你此前于此阶段发动此技能的次数）。",
+              furrykill_shouxiang: "授降",
+              furrykill_shouxiang_info: "你成为杀或决斗的目标时，你可将装备区里的所有牌交给此牌的使用者，若如此做，此牌对你无效。",
+              furrykill_shunshan: "瞬闪",
+              furrykill_shunshan_wuxie: "瞬闪",
+              furrykill_shunshan_info: "你可以将装备牌当做一张基本牌或无懈可击使用。",
+              furrykill_yixing: "异星",
+              furrykill_yixing_info: "出牌阶段限一次，你可以选择一名其他角色的一张牌并展示。若你是该角色使用此牌的合法目标，则该角色对你使用此牌；否则你获得此牌。然后若你的手牌数没有发生变化，你视为未发动本技能。",
             },
           },
         }, "FurryKill");
 
-        if (lib.config.extension_FurryKill_fake) {
-          lib.characterReplace["furrykill_anliang"] = ["furrykill_anliang", "furrykill_anliang_jie"];
+        //#region Fake
+        //if (lib.config.extension_FurryKill_fake) {
+        lib.characterReplace["furrykill_anliang"] = ["furrykill_anliang", "furrykill_anliang_jie"];
+
+        lib.dynamicTranslate["furrykill_ruiyan_jie"] = function (player) {
+          if (player.storage.furrykill_ruiyan_jie2) return '出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其一种类别的手牌（你必须拥有此类别的牌）；否则其获得你区域内的牌。';
+          return '出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其一种类别的手牌（你必须拥有此类别的牌），然后修改〖锐眼〗直到本轮结束；否则其获得你的一张牌。';
+        },
 
           game.导入character("FurryKillFake", "FurryKillFake", {
             connect: true,
@@ -4078,7 +5159,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   "male",
                   "furrykill_wolf",
                   3,
-                  ["furrykill_lvbing", "furrykill_hanren", "furrykill_ruiyan_jie"],
+                  ["furrykill_lvbing_jie", "furrykill_hanren_jie", "furrykill_ruiyan_jie"],
                   ["hiddenSkill", "des:珀瞳"],
                 ],
               },
@@ -4090,7 +5171,137 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
             },
             skill: {
               skill: {
+                furrykill_lvbing_jie: {
+                  trigger: {
+                    player: "showCharacterAfter",
+                  },
+                  hiddenSkill: true,
+                  popup: false,
+                  filter: function (event, player) {
+                    var target = _status.currentPhase;
+                    return event.toShow.contains('furrykill_anliang_jie') && target && target == player;
+                  },
+                  content: function () {
+                    'step 0';
+                    if (player.countCards('he')) {
+                      player.chooseCard('he', [1, player.maxHp], '履冰：将至多' + get.cnNumber(player.maxHp) + '张牌置于武将牌上作为【霜】').set('ai', function (card) {
+                        return 5 - get.value(card);
+                      });
+                    } else {
+                      event.finish();
+                    }
+                    'step 1';
+                    if (result.bool) {
+                      player.addToExpansion(result.cards, player, 'giveAuto').gaintag.add('furrykill_hanren_jie');
+                      player.logSkill('furrykill_lvbing_jie');
+                    }
+                  },
+                },
+
+                furrykill_hanren_jie: {
+                  group: ["furrykill_hanren_jie_1"],
+                  trigger: { player: 'phaseJieshuBegin' },
+                  popup: false,
+                  notemp: true,
+                  filter: function (event, player) {
+                    return player.countCards('he');
+                  },
+                  content: function () {
+                    'step 0';
+                    player.chooseCard('he', '寒刃：是否将一张牌置于武将牌上作为【霜】？');
+                    'step 1';
+                    if (result.bool) {
+                      player.addToExpansion(result.cards, player, 'giveAuto').gaintag.add('furrykill_hanren_jie');
+                      player.logSkill('furrykill_hanren_jie');
+                    }
+                  },
+                  intro: {
+                    content: 'expansion',
+                    markcount: 'expansion',
+                  },
+                  marktext: '霜',
+                  onremove: function (player, skill) {
+                    var cards = player.getExpansions("furrykill_hanren_jie");
+                    if (cards.length) player.loseToDiscardpile(cards);
+                  },
+                  subSkill: {
+                    1: {
+                      trigger: { global: "phaseUseBegin" },
+                      popup: false,
+                      frequent: true,
+                      filter: function (event, player) {
+                        return event.player != player
+                          && event.player.isAlive()
+                          && player.getExpansions('furrykill_hanren_jie').length > 0;
+                      },
+                      content: function () {
+                        'step 0';
+                        event.target2 = _status.currentPhase;
+                        event.shuang = player.getExpansions('furrykill_hanren_jie');
+                        player.chooseButton(['寒刃：是否交给其一张【霜】？其不能使用、打出或弃置与霜类别相同的牌，直到此回合结束。', event.shuang]).set('filterButton', function (button) {
+                          return ui.selected.buttons.length == 0;
+                        }).set('ai', function (button) {
+                          if (get.attitude(player, event.target2) > 0) return -1;
+                          return 10 - get.value(button.link);
+                        }).set('cards', event.shuang);
+                        'step 1';
+                        if (result.bool && result.links) {
+                          event.usedShuang = result.links[0];
+                          event.target2.gain(event.usedShuang, player, 'giveAuto');
+                        } else {
+                          event.finish();
+                        }
+                        'step 2';
+                        event.target2.storage.furrykill_hanren2_jie = get.type(event.usedShuang, 'trick');
+                        'step 3';
+                        event.target2.addTempSkill("furrykill_hanren2_jie");
+                        player.addTempSkill("furrykill_hanren3_jie");
+                        game.log(player, '对', event.target2, '发动了【寒刃】，【霜】为', event.usedShuang);
+                      },
+                      sub: true,
+                    }
+                  }
+                },
+                furrykill_hanren2_jie: {
+                  mark: true,
+                  charlotte: true,
+                  forced: true,
+                  intro: {
+                    content: "不能使用、打出或弃置与霜类别相同的牌"
+                  },
+                  mod: {
+                    cardDiscardable: function (card, player) {
+                      if (get.type(card, 'trick') == player.storage.furrykill_hanren2_jie) return false;
+                    },
+                    cardEnabled: function (card, player) {
+                      if (get.type(card, 'trick') == player.storage.furrykill_hanren2_jie) return false;
+                    },
+                    cardEnabled2: function (card, player) {
+                      if (get.type(card, 'trick') == player.storage.furrykill_hanren2_jie) return false;
+                    },
+                  },
+                  onremove: function (player) {
+                    delete player.storage.furrykill_hanren2_jie;
+                  },
+                },
+                furrykill_hanren3_jie: {
+                  trigger: { global: 'phaseUseEnd' },
+                  prompt2: function (event, player) {
+                    return '对' + get.translation(event.player) + '发动〖锐眼〗？';
+                  },
+                  content: function () {
+                    player.logSkill('furrykill_hanren_jie', trigger.player);
+                    var next = game.createEvent('furrykill_hanren_ruiyan');
+                    next.player = player;
+                    next.target = trigger.player;
+                    next.setContent(lib.skill.furrykill_ruiyan_jie.content);
+                  }
+                },
+
                 furrykill_ruiyan_jie: {
+                  init: function (player) {
+                    player.storage.furrykill_ruiyan_jie2 = false;
+                  },
                   enable: 'phaseUse',
                   usable: 1,
                   filterTarget: function (card, player, target) {
@@ -4110,21 +5321,47 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
                     if (typeCount >= 2) {
                       var list = ["选择其中一张获得", "弃置你与其手中一种类别的牌"];
+                      var countCards = player.countCards('he');
+                      if (countCards == 0) list.remove("弃置你与其手中一种类别的牌");
                       player.chooseControl(list, true, function () {
                         return "选择其中一张获得";
                       }).set('prompt', get.prompt2('furrykill_ruiyan_jie'));
                     } else {
-                      target.gainPlayerCard(1, 'he', player, true)
+                      if (!player.storage.furrykill_ruiyan_jie2) {
+                        target.gainPlayerCard(1, 'he', player, true)
+                      } else {
+                        var cards = player.getCards('hej');
+                        target.gain(cards, player, 'giveAuto');
+                      }
                       event.finish();
                     }
                     'step 2';
                     if (result.control == "选择其中一张获得") {
+                      player.storage.furrykill_ruiyan_jie2 = true;
                       player.gainPlayerCard(1, 'h', target, true, 'visible');
                       event.finish();
                     } else {
                       var list = ["基本牌", "锦囊牌", "装备牌"];
+                      if (!player.hasCard(function (c) {
+                        return get.type(c) == 'equip';
+                      }, 'he')
+                      ) {
+                        list.remove("装备牌");
+                      }
+                      if (!player.hasCard(function (c) {
+                        return get.type(c, 'trick') == 'trick';
+                      }, 'h')
+                      ) {
+                        list.remove("锦囊牌");
+                      }
+                      if (!player.hasCard(function (c) {
+                        return get.type(c) == 'basic';
+                      }, 'h')
+                      ) {
+                        list.remove("基本牌");
+                      }
                       player.chooseControl(list, true, function () {
-                        return "基本牌";
+                        return list[0];
                       }).set('prompt', get.prompt2('furrykill_ruiyan_jie'));
                     }
                     'step 3';
@@ -4137,6 +5374,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.discard(player.getCards('h').filter(c =>
                       get.type(c, 'trick') == event.discardType));
                     'step 4';
+                    player.storage.furrykill_ruiyan_jie2 = true;
                     target.discard(target.getCards('h').filter(c =>
                       get.type(c, 'trick') == event.discardType));
                   },
@@ -4150,22 +5388,41 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       },
                     },
                   },
+                  group: ['furrykill_ruiyan_jie_round'],
+                  subSkill: {
+                    round: {
+                      trigger: { global: 'roundStart' },
+                      direct: true,
+                      charlotte: true,
+                      content: function () {
+                        player.storage.furrykill_ruiyan_jie2 = false;
+                      },
+                    }
+                  },
                 },
 
               },
               translate: {
+                furrykill_lvbing_jie: "履冰",
+                furrykill_lvbing_jie_info: "隐匿，你于自己的回合登场后，可以将至多X张牌置于武将牌上，称为霜。(X为你的体力上限)",
+                furrykill_hanren_jie: "寒刃",
+                furrykill_hanren2_jie: "寒刃",
+                furrykill_hanren3_jie: "寒刃",
+                furrykill_hanren_jie_info: "结束阶段，你可以将一张牌置于武将牌上，称为霜。其他角色的出牌阶段开始时，你可以交给其一张霜，然后该角色不能使用、打出或弃置与霜类别相同的牌，直到此回合结束。其出牌阶段结束时，你可以对其执行〖锐眼〗的效果。",
                 furrykill_ruiyan_jie: "锐眼",
-                furrykill_ruiyan_jie_info: "出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其手中一种类别的牌；否则其获得你的一张牌。",
+                furrykill_ruiyan_jie_info: "出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其一种类别的手牌（你必须拥有此类别的牌），然后修改〖锐眼〗直到本轮结束；否则其获得你的一张牌。",
               },
             },
           }, "FurryKill");
-        }
+        //}
+        //#endregion
       }
     }, help: {}, config: {
       "FurryKill": { "name": "将FurryKill设为禁用", "init": false },
-      "fake": { "name": "启用假卡", "init": true },
+      //"fake": { "name": "启用假卡", "init": true },
     }, package: {
       intro: `
+        <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
 				<span style='font-weight: bold;'>小动物的三国杀</span>
 			`,
       author: "SwordFox & XuankaiCat",
