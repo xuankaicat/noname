@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.116.2',
+	version:'1.9.116.2.1',
 	update:'1.9.116',
 	changeLog:[
 		'派对浪客、樱庭星罗入选稿公布',
