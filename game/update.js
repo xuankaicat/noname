@@ -1,9 +1,11 @@
 window.noname_update={
-	version:'1.9.116.2.4',
+	version:'1.9.116.2.5',
 	update:'1.9.116',
 	changeLog:[
 		'月凌 ？？ 涵 界安谅 冥榆 默灵 万恩 云岚 战吼',
-		'bug修复'
+		'试图修复可能导致游戏卡死的bug',
+		'修复乌珠致死还能尝试给牌的bug',
+		'优化潜猎、叠浪选项逻辑',
 	],
 	files:[
 		'extension/FurryKill/extension.js',

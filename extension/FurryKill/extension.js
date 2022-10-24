@@ -1252,7 +1252,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       var list = ["确定", "取消"];
                       event.qianlieUsable = player.hasCard(function (card) {
                         return get.name(card) == "sha"
-                          || (get.type2(card, false) == "trick"
+                          || (get.type2(card) == "trick"
                             && get.tag({ name: card.name }, "damage"));
                       })
                       if (!event.qianlieUsable) list.remove("确定");
@@ -1264,18 +1264,20 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       }).set('prompt', get.prompt2('furrykill_qianlie_1'));
                       'step 1'
                       if (result.control == "确定") {
-                        player.changeZhuanhuanji("furrykill_qianlie");
-                        player.markSkill("furrykill_qianlie");
-
-                        player.chooseToUse(
-                          "潜猎：是否使用一张杀或伤害锦囊牌", true,
+                        var next = player.chooseToUse(
+                          "潜猎：是否使用一张杀或伤害锦囊牌",
                           function (card) {
                             return (get.name(card) == "sha"
-                              || (get.type2(card, false) == "trick" &&
+                              || (get.type2(card) == "trick" &&
                                 get.tag({ name: card.name }, "damage"))
                             ) && player.hasUseTarget(card);
                           }
-                        ).logSkill = "furrykill_qianlie";
+                        );
+                        next.logSkill = "furrykill_qianlie";
+                        next.oncard=function(){
+                          player.changeZhuanhuanji("furrykill_qianlie");
+                          player.markSkill("furrykill_qianlie");
+                        };
                       }
                     },
                     sub: true,
@@ -1457,7 +1459,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.chooseUseTarget(true, result.links[0], false).logSkill = 'furrykill_shineng';
                   }
                   'step 4'
-                  if (event.totalCards >= 30) {
+                  if (event.totalCards >= 32) {
                     player.chooseTarget('势能：是否选择一个目标并对其造成1点雷电伤害？', false, function (card, player, target) {
                       return true;
                     }).set('ai', function (target) {
@@ -1465,7 +1467,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     });
                   }
                   'step 5'
-                  if (event.totalCards >= 30 && result.bool) {
+                  if (event.totalCards >= 32 && result.bool) {
                     var target = result.targets[0];
                     player.line(target, 'thunder');
                     target.damage(1, 'thunder');
@@ -1982,7 +1984,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 charlotte: true,
                 content: function () {
                   "step 0"
-                  player.drawTo(player.maxHp);
+                  player.drawTo(Math.min(player.maxHp, 8));
                   "step 1"
                   game.countPlayer(function (current) {
                     current.link(true);
@@ -2037,12 +2039,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   }
                   'step 4';
                   var next = player.chooseToDiscard('叠浪：弃置三张类别不同的牌', 3,
-                    lib.filter.filterDifferentTypes, 'he', true);
+                    lib.filter.filterDifferentTypes, 'he', false);
                   next.set('num', num);
                   next.set('complexCard', true);
                   next.set('ai', function (card) {
                     return 9 - get.value(card);
                   });
+                  'step 5';
+                  if(!result.bool) {
+                    event.goto(3);
+                  }
                 },
                 group: ["furrykill_dielang_1", "furrykill_dielang_2"],
                 subSkill: {
@@ -2841,7 +2847,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         event.finish();
                       }
                       "step 3";
-                      event.target.chooseCard('he', [1, 2], true, '乌珠：将一至两张牌交给' + get.translation(player));
+                      if(!player.isAlive()) {
+                        event.finish();
+                      } else {
+                        event.target.chooseCard('he', [1, 2], true, '乌珠：将一至两张牌交给' + get.translation(player));
+                      }
                       "step 4";
                       if (result.bool) {
                         event.target.give(result.cards, player, true);
@@ -3072,11 +3082,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     return player != trigger.player && trigger.player.inRange(player);
                   })) {
                     var source = trigger.player;
-                    player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
+                    var next = player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
                       return target != source && source.inRange(target);
                     }).set('ai', function (target) {
                       return get.damageEffect(target, player, player);
                     });
+                    next.set('source', source);
                   } else {
                     event.goto(0);
                   }
@@ -3181,16 +3192,18 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   'step 0';
-                  var type = get.type(trigger.card);
-                  var name = trigger.card.name;
-                  var value = get.value(trigger.card);
-                  player.chooseToDiscard('h', '效学：弃置一张与' + get.translation(trigger.card) + '类别相同、牌名不同的暗置牌，获得此牌并明置。',
+                  var next = player.chooseToDiscard('h', '效学：弃置一张与' + get.translation(trigger.card) + '类别相同、牌名不同的暗置牌，获得此牌并明置。',
                     1, function (card) {
-                      if (player.storage.mingzhi && player.storage.mingzhi.contains(card)) return false;
-                      return get.type(card) == type && card.name != name;
+                      var c = _status.event.cardx;
+                      var mingzhi = player.storage.mingzhi;
+                      if (mingzhi && mingzhi.contains(card)) return false;
+                      return get.type(card) == get.type(c) && card.name != c.name;
                     }).set('ai', function (card) {
-                      return value - get.value(card);
+                      return get.value(_status.event.cardx) - get.value(card);
                     });
+                  next.set('mingzhi', player.storage.mingzhi);
+                  next.set('cardx', trigger.card);
+                  next.set('complexCard', true);
                   'step 1';
                   if (result.bool) {
                     player.addTempSkill('furrykill_xiaoxue_used');
@@ -3347,9 +3360,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (player.countCards('he') == 0) {
                     event.finish();
                   } else {
-                    player.chooseToDiscard(true, 'he', function (card) {
-                      return card != trigger.card;
+                    var next = player.chooseToDiscard(true, 'he', function (card) {
+                      return card != _status.event.cardx;
                     });
+                    next.set('cardx', trigger.card);
+                    next.set('complexCard', true);
                   }
                 },
                 onremove: function (player) {
@@ -4230,9 +4245,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (result.bool && result.links) {
                     var card = result.links[0];
                     player.gain(card);
-                    player.chooseCard('h', true, '选择一张作为交换的手牌', function (c) {
+                    var next = player.chooseCard('h', true, '选择一张作为交换的手牌', function (c) {
                       return card != c;
                     });
+                    next.set('card', card);
                   }
                   "step 5";
                   if (result.bool) {
@@ -4640,13 +4656,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     stars += p.getExpansions("furrykill_xingzhan_star").length;
                   });
                   if (stars > 3) {
-                    player.chooseTarget(true, '选择一个目标移去一个“星”',
+                    var next = player.chooseTarget(true, '选择一个目标移去一个“星”',
                       function (card, player, target) {
                         return players.contains(target);
                       }
                     ).set('ai', function (target) {
                       return -get.attitude(player, target);
                     });
+                    next.set('players', players);
                   } else {
                     event.finish();
                   }
@@ -4938,9 +4955,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
               furrykill_shunshan_wuxie: {
-                log: false,
-                silent: true,
-                popup: false,
                 enable: "chooseToUse",
                 selectCard: 1,
                 position: 'hes',
@@ -5047,7 +5061,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_lianfu: "链缚",
               furrykill_lianfu_info: "锁定技，游戏开始时，你横置；你的武将牌重置时，改为你增加一点体力上限，然后选择一项:1、摸两张牌;2、获得场上的一张牌;3、于当前回合结束后横置至多两名其他角色。",
               furrykill_pojia: "破枷",
-              furrykill_pojia_info: "觉醒技，你濒死时，恢复全部体力，失去链缚。当前回合结束后，你将手牌补至体力上限，然后横置所有角色。",
+              furrykill_pojia_info: "觉醒技，你濒死时，恢复全部体力，失去链缚。当前回合结束后，你将手牌补至体力上限（至多8张），然后横置所有角色。",
               furrykill_dielang: "叠浪",
               furrykill_dielang_info: "锁定技，你于出牌阶段非第一次使用牌时，若此牌点数大于你于此阶段使用的上一张牌，你摸一张牌；否则你弃置三张类别不同的牌或于此牌结算完毕后结束出牌阶段。",
               furrykill_shouhe: "收合",
@@ -5448,7 +5462,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.4",
+      version: "1.9.116.2.5",
     },
   }
 })
