@@ -4583,7 +4583,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 }
               },
               furrykill_xingzhou_after: {
-                trigger: { player: 'phaseAfter' },
+                trigger: { player: 'phaseBegin' },
                 charlotte: true,
                 direct: true,
                 priority: 201,
@@ -5448,7 +5448,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.3",
+      version: "1.9.116.2.4",
     },
   }
 })
