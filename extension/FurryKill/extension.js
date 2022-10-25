@@ -8,8 +8,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     },
     furrykill_chengming: function (player) {
       if (player.storage.furrykill_chengming == true)
-        return '转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。<span class="bluetext">阴：你使用明置的牌后，摸一张牌。</span>';
-      return '转换技，锁定技，<span class="bluetext">阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。</span>阴：你使用明置的牌后，摸一张牌。';
+        return '转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。<span class="bluetext">阴：你使用明置的牌时，摸一张牌。</span>';
+      return '转换技，锁定技，<span class="bluetext">阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。</span>阴：你使用明置的牌时，摸一张牌。';
     },
     furrykill_sanyuan: function (player) {
       if (player.storage.furrykill_sanyuan == 1)
@@ -510,6 +510,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
             global: "loseEnd"
           },
           forced: true,
+          charlotte: true,
           priority: 101,
           popup: false,
           forceDie: true,
@@ -521,17 +522,25 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
           content: function () {
             event.cards = trigger.cards;
             let mingzhiCard = [];
+            let update = false;
             for (var i = 0; i < event.cards.length; i++) {
               if (player.storage.mingzhi && player.storage.mingzhi.contains(event.cards[i])) {
                 if (player.storage.mingzhi.length == 1) {
                   delete player.storage.mingzhi;
                   player.unmarkSkill('mingzhi');
+                  update = false;
                 } else {
                   player.storage.mingzhi.remove(event.cards[i]);
-                  player.syncStorage('mingzhi');
+                  update = true;
                 }
                 mingzhiCard.push(event.cards[i]);
               }
+            }
+            if (update) {
+              game.broadcastAll(function (player) {
+                player.markSkill('mingzhi');
+                player.syncStorage('mingzhi');
+              }, player);
             }
             event.oCards = mingzhiCard;
             if (event.oCards.length) {
@@ -1274,7 +1283,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                           }
                         );
                         next.logSkill = "furrykill_qianlie";
-                        next.oncard=function(){
+                        next.oncard = function () {
                           player.changeZhuanhuanji("furrykill_qianlie");
                           player.markSkill("furrykill_qianlie");
                         };
@@ -1422,15 +1431,35 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   'step 0'
-                  player.chooseToDiscard('he',
-                    '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。',
-                    [1, player.countCards('he')]).set('ai', function (card) {
-                      if (player.countCards('he') >= 6) return 32;
-                      return -1;// 势能的ai，暂时默认不弃牌
-                    });
+                  var text = '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。';
+                  var dialog = ui.create.dialog(text);
+
+                  var next = player.chooseToDiscard('he', dialog, [1, player.countCards('he')]).set('ai', function (card) {
+                    if (player.countCards('he') >= 6) return 32;
+                    return -1;// 势能的ai，暂时默认不弃牌
+                  });
+                  next.set('dice', 0);
+                  next.set('complexCard', true);
+                  next.set('prompt', false);
+                  next.set('promptbar', dialog.add('0'));
+                  next.set('custom', {
+                    add: {
+                      card: function () {
+                        var cards = ui.selected.cards;
+                        var dice = 0;
+                        if (cards.length > 0) {
+                          dice = cards.map(c => get.number(c)).reduce((prev, curr) => prev + curr);
+                        }
+                        _status.event.dice = dice;
+                        _status.event.promptbar.innerHTML = '当前点数：' + get.numStr(_status.event.dice);
+                      }
+                    },
+                    replace: {}
+                  });
                   'step 1'
                   event.totalCards = 0;
                   if (result.bool) {
+                    console.log(result);
                     var total = 0;
                     var cards = result.cards;
                     for (var i = 0; i < cards.length; i++) {
@@ -2046,7 +2075,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     return 9 - get.value(card);
                   });
                   'step 5';
-                  if(!result.bool) {
+                  if (!result.bool) {
                     event.goto(3);
                   }
                 },
@@ -2847,7 +2876,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                         event.finish();
                       }
                       "step 3";
-                      if(!player.isAlive()) {
+                      if (!player.isAlive()) {
                         event.finish();
                       } else {
                         event.target.chooseCard('he', [1, 2], true, '乌珠：将一至两张牌交给' + get.translation(player));
@@ -3083,7 +3112,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   })) {
                     var source = trigger.player;
                     var next = player.chooseTarget("激音：令该角色攻击范围内的一名角色失去一点体力。", function (card, player, target) {
-                      return target != source && source.inRange(target);
+                      return target != _status.event.source && _status.event.source.inRange(target);
                     }).set('ai', function (target) {
                       return get.damageEffect(target, player, player);
                     });
@@ -3195,7 +3224,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   var next = player.chooseToDiscard('h', '效学：弃置一张与' + get.translation(trigger.card) + '类别相同、牌名不同的暗置牌，获得此牌并明置。',
                     1, function (card) {
                       var c = _status.event.cardx;
-                      var mingzhi = player.storage.mingzhi;
+                      var mingzhi = _status.event.mingzhi;
                       if (mingzhi && mingzhi.contains(card)) return false;
                       return get.type(card) == get.type(c) && card.name != c.name;
                     }).set('ai', function (card) {
@@ -3293,8 +3322,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     sub: true,
                   },
                   2: {
-                    prompt2: "你使用明置的牌后，摸一张牌。",
-                    trigger: { player: "useCardAfter" },
+                    prompt2: "你使用明置的牌时，摸一张牌。",
+                    trigger: { player: "useCardBegin" },
                     audio: 2,
                     forced: true,
                     filter: function (event, player) {
@@ -4246,7 +4275,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     var card = result.links[0];
                     player.gain(card);
                     var next = player.chooseCard('h', true, '选择一张作为交换的手牌', function (c) {
-                      return card != c;
+                      return _status.event.card != c;
                     });
                     next.set('card', card);
                   }
@@ -4312,7 +4341,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.removeSkill('furrykill_quanneng3');
                   "step 1";
                   player.init('furrykill_mingyu_evil');
-                  player.update();
                   "step 2";
                   player.discard(player.getCards('hej'));
                   ui.clear();
@@ -4322,6 +4350,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   "step 4";
                   if (_status.mode == 'two') {
                     game.broadcastAll(function (player) {
+                      player.update();
                       game.countPlayer(function (current) {
                         if (current != player) {
                           current.side = false;
@@ -4340,6 +4369,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     }
                   } else {
                     game.broadcastAll(function (player) {
+                      player.update();
                       game.countPlayer(function (current) {
                         if (current.isZhu) {
                           delete current.isZhu;
@@ -5110,7 +5140,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_xiaoxue: "效学",
               furrykill_xiaoxue_info: "其他角色的回合限一次，一名色使用的基本牌或普通锦囊结算完毕后，若你没有同类别的明置牌，你可以弃置一张与之类别相同、牌名不同的暗置牌，获得此牌并明置。",
               furrykill_chengming: "澄明",
-              furrykill_chengming_info: "转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。阴：你使用明置的牌后，摸一张牌。",
+              furrykill_chengming_info: "转换技，锁定技，阳：你的暗置牌因弃置进入弃牌堆后，你摸一张牌。阴：你使用明置的牌时，摸一张牌。",
               furrykill_canghai: "沧海",
               furrykill_canghai_info: "出牌阶段开始时，你可以摸两张牌。若如此做，你于此阶段第一次使用每种类别的牌时，你需弃置一张牌。",
               furrykill_juanren: "卷刃",
@@ -5457,12 +5487,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.6</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.5",
+      version: "1.9.116.2.6",
     },
   }
 })
