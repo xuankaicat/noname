@@ -4340,7 +4340,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.removeSkill('furrykill_quanneng2');
                   player.removeSkill('furrykill_quanneng3');
                   "step 1";
-                  player.init('furrykill_mingyu_evil');
+                  game.broadcastAll(function (player) {
+                    player.init('furrykill_mingyu_evil');
+                    player.update();
+                  }, player);
+                  
                   "step 2";
                   player.discard(player.getCards('hej'));
                   ui.clear();
@@ -4348,9 +4352,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw(4);
                   player.addSkill("furrykill_quanneng_kill");
                   "step 4";
-                  if (_status.mode == 'two') {
+                  if (_status.mode == 'two' || _status.mode == '1v1') {
                     game.broadcastAll(function (player) {
-                      player.update();
                       game.countPlayer(function (current) {
                         if (current != player) {
                           current.side = false;
@@ -4369,7 +4372,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     }
                   } else {
                     game.broadcastAll(function (player) {
-                      player.update();
                       game.countPlayer(function (current) {
                         if (current.isZhu) {
                           delete current.isZhu;
@@ -5487,12 +5489,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.6</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.7</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.6",
+      version: "1.9.116.2.7",
     },
   }
 })

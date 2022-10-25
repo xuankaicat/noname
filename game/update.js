@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.116.2.6',
+	version:'1.9.116.2.7',
 	update:'1.9.116',
 	changeLog:[
 		'月凌 ？？ 涵 界安谅 冥榆 默灵 万恩 云岚 战吼',
@@ -7,6 +7,7 @@ window.noname_update={
 		'更改澄明阴触发时机',
 		'优化黑白势能弃牌显示',
 		'优化明置在联机模式下的刷新时机',
+		'修复洛云联机觉醒立绘不变的bug',
 	],
 	files:[
 		'extension/FurryKill/extension.js',
