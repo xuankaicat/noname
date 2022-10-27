@@ -2014,11 +2014,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 content: function () {
                   "step 0"
                   player.drawTo(Math.min(player.maxHp, 8));
+                  player.link(false);
                   "step 1"
                   game.countPlayer(function (current) {
-                    current.link(true);
+                    if(current != player)
+                      current.link(true);
                   });
-                  game.log(player, '横置了所有角色')
                   game.delayx();
                   "step 2"
                   player.removeSkill("furrykill_pojia_after");
@@ -3212,10 +3213,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 filter: function (event, player) {
                   if (player == _status.currentPhase) return false;
                   if (player.hasSkill('furrykill_xiaoxue_used')) return false;
+                  var handCount = player.countCards('h');
+                  if(handCount == 0) return false;
                   var type = get.type(event.card);
                   if (type != "trick" && type != 'basic') return false;
                   if (event.cards.filterInD().length == 0) return false;
-                  if (!player.storage.mingzhi && player.countCards('h') > 0) return true;
+                  if (!player.storage.mingzhi) return true;
                   if (player.storage.mingzhi.some(m => get.type(m) == type)) return false;
                   return player.countCards('h') - player.countMingzhiCard() > 0;
                 },
@@ -5093,7 +5096,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_lianfu: "链缚",
               furrykill_lianfu_info: "锁定技，游戏开始时，你横置；你的武将牌重置时，改为你增加一点体力上限，然后选择一项:1、摸两张牌;2、获得场上的一张牌;3、于当前回合结束后横置至多两名其他角色。",
               furrykill_pojia: "破枷",
-              furrykill_pojia_info: "觉醒技，你濒死时，恢复全部体力，失去链缚。当前回合结束后，你将手牌补至体力上限（至多8张），然后横置所有角色。",
+              furrykill_pojia_info: "觉醒技，你濒死时，恢复全部体力，失去链缚。当前回合结束后，你将手牌补至体力上限（至多补至8张）并重置武将牌，然后横置所有其他角色。",
               furrykill_dielang: "叠浪",
               furrykill_dielang_info: "锁定技，你于出牌阶段非第一次使用牌时，若此牌点数大于你于此阶段使用的上一张牌，你摸一张牌；否则你弃置三张类别不同的牌或于此牌结算完毕后结束出牌阶段。",
               furrykill_shouhe: "收合",
@@ -5489,12 +5492,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.7</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.8</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.7",
+      version: "1.9.116.2.8",
     },
   }
 })
