@@ -876,6 +876,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_shunshan", "furrykill_yixing"],
                 ["des:粘钩"],
               ],
+              furrykill_shilingyi: [
+                "male",
+                "furrykill_wolf",
+                4,
+                ["furrykill_heiyu", "furrykill_yuyan"],
+                ["des:狱炎之翼"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -909,6 +916,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_moling: "默灵",
               furrykill_yunlan: "云岚",
               furrykill_zhanhou: "战吼",
+              furrykill_shilingyi: "时凌翼",
             },
           },
           characterTitle: {
@@ -1459,7 +1467,6 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   'step 1'
                   event.totalCards = 0;
                   if (result.bool) {
-                    console.log(result);
                     var total = 0;
                     var cards = result.cards;
                     for (var i = 0; i < cards.length; i++) {
@@ -2017,7 +2024,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.link(false);
                   "step 1"
                   game.countPlayer(function (current) {
-                    if(current != player)
+                    if (current != player)
                       current.link(true);
                   });
                   game.delayx();
@@ -3214,7 +3221,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (player == _status.currentPhase) return false;
                   if (player.hasSkill('furrykill_xiaoxue_used')) return false;
                   var handCount = player.countCards('h');
-                  if(handCount == 0) return false;
+                  if (handCount == 0) return false;
                   var type = get.type(event.card);
                   if (type != "trick" && type != 'basic') return false;
                   if (event.cards.filterInD().length == 0) return false;
@@ -4347,7 +4354,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.init('furrykill_mingyu_evil');
                     player.update();
                   }, player);
-                  
+
                   "step 2";
                   player.discard(player.getCards('hej'));
                   ui.clear();
@@ -5047,6 +5054,138 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_heiyu: {
+                skillAnimation: "epic",
+                animationColor: "gray",
+                audio: 2,
+                enable: "phaseUse",
+                filter: function (event, player) {
+                  return !player.storage.furrykill_heiyu;
+                },
+                filterTarget: function (card, player, target) {
+                  return player != target && target.countCards('h');
+                },
+                unique: true,
+                limited: true,
+                selectTarget: -1,
+                mark: true,
+                content: function () {
+                  'step 0';
+                  player.storage.furrykill_heiyu = true;
+                  player.awakenSkill('furrykill_heiyu');
+                  target.chooseCard(true, 'h').set('ai', function (card) {
+                    return 20 - get.value(card);
+                  });
+                  'step 1';
+                  target.showCards(result.cards);
+                  event.card2 = result.cards[0];
+                  if (event.card2.name == "shan" || !target.hasUseTarget(event.card2, null, true)) {
+                    target.discard(event.card2);
+                    event.finish();
+                  }
+                  else {
+                    var card = event.card2;
+                    var info = get.info(card);
+                    var range;
+                    if (!info.notarget) {
+                      var select = get.copy(info.selectTarget);
+                      if (select == undefined) {
+                        range = [1, 1];
+                      }
+                      else if (typeof select == 'number') range = [select, select];
+                      else if (get.itemtype(select) == 'select') range = select;
+                      else if (typeof select == 'function') range = select(card, target);
+                      game.checkMod(card, target, range, 'selectTarget', target);
+                    }
+                    if (info.notarget || range[1] <= -1) {
+                      if (!info.notarget && range[1] <= -1) {
+                        var targets = game.filterPlayer();
+                        for (var i = 0; i < targets.length; i++) {
+                          if (!target.canUse(card, targets[i], event.nodistance ? false : null, event.addCount === false ? null : true)) {
+                            targets.splice(i--, 1);
+                          }
+                        }
+                        event.targets2 = targets;
+                      }
+                      else event.targets2 = [];
+
+                      player.chooseBool('黑羽：令' + get.translation(target) + "使用" + get.translation(event.card2) + "或点取消弃置此牌。");
+                    }
+                    else {
+                      var next = player.chooseTarget(
+                        '黑羽：选择' + get.translation(target) + "使用" + get.translation(event.card2) + "的目标或点取消弃置此牌。",
+                        false, function (card, player, target) {
+                          return _status.event.target.canUse(_status.event.card, target, null, true);
+                        }).set('ai', function (target) {
+                          return get.effect(target, _status.event.card);
+                        });
+                      next.set('target', target)
+                      next.set('card', event.card2);
+                      next.set('_get_card', event.card2);
+                      next.set('selectTarget', lib.filter.selectTarget);
+                    }
+                  }
+                  'step 2';
+                  if (!result.bool) {
+                    target.discard(event.card2);
+                    event.finish();
+                  } else {
+                    event.result = {
+                      bool: true,
+                      targets: event.targets2 || result.targets,
+                    };
+                    if (event.result.targets) {
+                      target.useCard(event.card2, event.result.targets, false);
+                    }
+                  }
+                },
+                ai: {
+                  order: 1,
+                },
+                init: function (player) {
+                  player.storage.furrykill_heiyu = false;
+                },
+                intro: {
+                  content: "limited",
+                },
+              },
+
+              furrykill_yuyan: {
+                hasHistory: function (player) {
+                  return player.getHistory('damage').length > 0;
+                },
+                locked: true,
+                direct: true,
+                trigger: { target: "useCardToTargeted" },
+                filter: function (event, player) {
+                  return event.player != player 
+                  && lib.skill.furrykill_yuyan.hasHistory(player) 
+                  && event.player.countCards('he') > 0;
+                },
+                content: function () {
+                  trigger.player.chooseToDiscard(true);
+                  player.logSkill('furrykill_yuyan', trigger.player);
+                },
+                group: ['furrykill_yuyan_draw'],
+                subSkill: {
+                  draw: {
+                    trigger: { player: "useCard2" },
+                    locked: true,
+                    direct: true,
+                    filter: function (event, player) {
+                      return event.targets.some(t => {
+                        return lib.skill.furrykill_yuyan.hasHistory(t);
+                      });
+                    },
+                    content: function () {
+                      player.draw();
+                      player.logSkill('furrykill_yuyan');
+                    },
+                    sub: true,
+                  }
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -5207,6 +5346,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_shunshan_info: "你可以将装备牌当做一张基本牌或无懈可击使用。",
               furrykill_yixing: "异星",
               furrykill_yixing_info: "出牌阶段限一次，你可以选择一名其他角色的一张牌并展示。若你是该角色使用此牌的合法目标，则该角色对你使用此牌；否则你获得此牌。然后若你的手牌数没有发生变化，你视为未发动本技能。",
+              furrykill_heiyu: "黑羽",
+              furrykill_heiyu_info: "限定技，出牌阶段，你可以令其他角色依次展示一张手牌，你选择令其使用此牌（你指定目标），或弃置此牌。",
+              furrykill_yuyan: "狱眼",
+              furrykill_yuyan_info: "锁定技，你对本回合中受到过伤害的角色使用牌时，摸一张牌；其他角色对你使用牌时，若你本回合已经受到过伤害，该角色需弃置一张牌。",
             },
           },
         }, "FurryKill");
@@ -5497,7 +5640,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.2.8",
+      version: "1.9.116.3",
     },
   }
 })

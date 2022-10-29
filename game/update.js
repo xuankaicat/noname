@@ -1,10 +1,8 @@
 window.noname_update={
-	version:'1.9.116.2.8',
+	version:'1.9.116.3',
 	update:'1.9.116',
 	changeLog:[
-		'月凌 ？？ 涵 界安谅 冥榆 默灵 万恩 云岚 战吼',
-		'修复哈利法尔可能导致的弹窗',
-		'重做破枷',
+		'时凌翼',
 	],
 	files:[
 		'extension/FurryKill/extension.js',
