@@ -1,5 +1,5 @@
 window.noname_asset_list=[
-	'v1.9.116.2',
+	'v1.9.116.3',
 
 	"FurryKill/furrykill.jpg","FurryKill/furrykill_anliang.jpg","FurryKill/furrykill_aosen.jpg","FurryKill/furrykill_baitu.jpg",
 	"FurryKill/furrykill_anliang_jie.jpg","FurryKill/furrykill_halifax.jpg","FurryKill/furrykill_guoguo.jpg","FurryKill/furrykill_haohai.jpg","FurryKill/furrykill_han.jpg","FurryKill/furrykill_heibai.jpg","FurryKill/furrykill_lanyuan.jpg","FurryKill/furrykill_mingyu.jpg","FurryKill/furrykill_jiasu.jpg",
@@ -7,6 +7,7 @@ window.noname_asset_list=[
 	"FurryKill/furrykill_gudong.jpg","FurryKill/furrykill_qingyu.jpg","FurryKill/furrykill_shifeng.jpg","FurryKill/furrykill_qinhan.jpg","FurryKill/furrykill_shasha.jpg","FurryKill/furrykill_wanen.jpg","FurryKill/furrykill_tier.jpg",
 	"FurryKill/furrykill_sword.jpg","FurryKill/furrykill_xiaoba.jpg","FurryKill/furrykill_wenhaowenhao.jpg","FurryKill/furrykill_yizhichuan.jpg",
 	"FurryKill/furrykill_yongshi.jpg","FurryKill/furrykill_xuankai.jpg","FurryKill/furrykill_yunlan.jpg","FurryKill/furrykill_yueling.jpg","FurryKill/sp_furrykill_yongshi.jpg","FurryKill/furrykill_xiaorui.jpg","FurryKill/furrykill_zhanhou.jpg",
+	"FurryKill/furrykill_shilingyi.jpg",
 
 	'audio/background/aozhan_chaoming.mp3',
 	'audio/background/aozhan_online.mp3',
