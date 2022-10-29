@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.116.3',
+	version:'1.9.116.3.1',
 	update:'1.9.116',
 	changeLog:[
 		'时凌翼',

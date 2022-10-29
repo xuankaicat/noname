@@ -5163,7 +5163,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   && event.player.countCards('he') > 0;
                 },
                 content: function () {
-                  trigger.player.chooseToDiscard(true);
+                  trigger.player.chooseToDiscard('he', true);
                   player.logSkill('furrykill_yuyan', trigger.player);
                 },
                 group: ['furrykill_yuyan_draw'],
@@ -5640,7 +5640,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.3",
+      version: "1.9.116.3.1",
     },
   }
 })
