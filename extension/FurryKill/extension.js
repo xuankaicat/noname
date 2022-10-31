@@ -4020,7 +4020,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_zheyue: {
-                trigger: { global: "useCardAfter" },
+                trigger: { global: "useCardBegin" },
                 direct: true,
                 filter: function (event, player) {
                   if (_status.currentPhase == event.player) return false;
@@ -5635,12 +5635,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.2.8</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.3.2</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.3.1",
+      version: "1.9.116.3.2",
     },
   }
 })
