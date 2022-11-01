@@ -1,8 +1,9 @@
 window.noname_update={
-	version:'1.9.116.3.2',
+	version:'1.9.116.3.3',
 	update:'1.9.116',
 	changeLog:[
 		'时凌翼',
+		'调整部分技能时机',
 		'修复bug'
 	],
 	files:[

@@ -1439,32 +1439,54 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   'step 0'
-                  var text = '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。';
-                  var dialog = ui.create.dialog(text);
+                  event.videoId = lib.status.videoId++;
+                  var func = function (player, id) {
+                    var text = '势能：你可以弃置任意数量的牌。若这些牌的点数之和不小于13，你可以使用其中的一张；若点数之和不小于32，你可以造成一点雷电伤害。';
+                    var dialog = ui.create.dialog(text);
+                    dialog.videoId = id;
+                    dialog.promptbar = dialog.add('0');
+                    return dialog;
+                  };
 
-                  var next = player.chooseToDiscard('he', dialog, [1, player.countCards('he')]).set('ai', function (card) {
-                    if (player.countCards('he') >= 6) return 32;
+                  if (player.isOnline2()) {
+                    player.send(func, player, event.videoId);
+                  }
+                  event.dialog = func(player, event.videoId);
+                  if(!event.isMine()){
+                    event.dialog.style.display='none';
+                  }
+
+                  var cardFunc = function () {
+                    var cards = ui.selected.cards;
+                    var dice = 0;
+                    if (cards.length > 0) {
+                      dice = cards.map(c => get.number(c)).reduce((prev, curr) => prev + curr);
+                    }
+                    _status.event.dice = dice;
+                    get.idDialog(_status.event.dialog).promptbar.innerHTML = '当前点数：' + get.numStr(_status.event.dice);
+                  }
+
+                  var next = player.chooseToDiscard('he', [1, player.countCards('he')]);
+                  next.set('ai', function (card) {
+                    if (_status.event.player.countCards('he') >= 6) return 32;
                     return -1;// 势能的ai，暂时默认不弃牌
                   });
+                  next.set('dialog', event.videoId);
                   next.set('dice', 0);
+                  next.set('cardFunc', cardFunc);
+                  next.set('player', player);
                   next.set('complexCard', true);
                   next.set('prompt', false);
-                  next.set('promptbar', dialog.add('0'));
                   next.set('custom', {
                     add: {
-                      card: function () {
-                        var cards = ui.selected.cards;
-                        var dice = 0;
-                        if (cards.length > 0) {
-                          dice = cards.map(c => get.number(c)).reduce((prev, curr) => prev + curr);
-                        }
-                        _status.event.dice = dice;
-                        _status.event.promptbar.innerHTML = '当前点数：' + get.numStr(_status.event.dice);
-                      }
+                      card: cardFunc
                     },
                     replace: {}
                   });
                   'step 1'
+                  if(player.isOnline2()){
+                    player.send('closeDialog',event.videoId);
+                  }
                   event.totalCards = 0;
                   if (result.bool) {
                     var total = 0;
@@ -3214,7 +3236,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
 
               furrykill_xiaoxue: {
                 trigger: {
-                  global: "useCardAfter",
+                  global: "useCard",
                 },
                 direct: true,
                 filter: function (event, player) {
@@ -3332,8 +3354,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     sub: true,
                   },
                   2: {
-                    prompt2: "你使用明置的牌时，摸一张牌。",
-                    trigger: { player: "useCardBegin" },
+                    prompt2: "你使用明置的牌后，摸一张牌。",
+                    trigger: { player: "useCardAfter" },
                     audio: 2,
                     forced: true,
                     filter: function (event, player) {
@@ -3342,7 +3364,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                       return true;
                     },
                     content: function () {
+                      'step 0';
                       player.draw();
+                      'step 1';
                       player.storage.furrykill_chengming_lose = [];
                       player.changeZhuanhuanji("furrykill_chengming");
                       player.markSkill("furrykill_chengming");
@@ -4020,7 +4044,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_zheyue: {
-                trigger: { global: "useCardBegin" },
+                trigger: { global: "useCard" },
                 direct: true,
                 filter: function (event, player) {
                   if (_status.currentPhase == event.player) return false;
@@ -4362,7 +4386,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw(4);
                   player.addSkill("furrykill_quanneng_kill");
                   "step 4";
-                  if (_status.mode == 'two' || _status.mode == '1v1') {
+                  if (_status.mode == 'two' || _status.mode == '1v1' || _status.mode == '2v2') {
                     game.broadcastAll(function (player) {
                       game.countPlayer(function (current) {
                         if (current != player) {
@@ -5158,9 +5182,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 direct: true,
                 trigger: { target: "useCardToTargeted" },
                 filter: function (event, player) {
-                  return event.player != player 
-                  && lib.skill.furrykill_yuyan.hasHistory(player) 
-                  && event.player.countCards('he') > 0;
+                  return event.player != player
+                    && lib.skill.furrykill_yuyan.hasHistory(player)
+                    && event.player.countCards('he') > 0;
                 },
                 content: function () {
                   trigger.player.chooseToDiscard('he', true);
@@ -5635,12 +5659,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.3.2</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.3.3</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.3.2",
+      version: "1.9.116.3.3",
     },
   }
 })
