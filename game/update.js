@@ -1,10 +1,13 @@
 window.noname_update={
-	version:'1.9.116.3',
+	version:'1.9.116.4',
 	update:'1.9.116.2',
 	changeLog:[
-		'OL霍峻，十周年管亥',
+		'十周年卞喜、胡昭、牛辅、界刘封、界SP太史慈、OL霍峻，十周年管亥',
 		'国战模式晋武将更新与技能调整',
 		'其他技能调整和bug修复',
+		'furrykill:',
+		'阿桑、白逸',
+		'bug修复'
 	],
 	files:[
 		'extension/FurryKill/extension.js',

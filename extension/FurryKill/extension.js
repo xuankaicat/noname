@@ -22,6 +22,11 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
       if (player.storage.furrykill_suqing) return '出牌阶段开始时，你可以选择一名角色，弃置其每个区域内的一张牌。此阶段结束时，若你未对其造成伤害，你失去一点体力。';
       return '锁定技，出牌阶段开始时，你选择一名体力值不大于你的角色，然后弃置其每个区域内的一张牌。此回合结束时，若你未对其造成伤害，你失去一点体力。';
     },
+    furrykill_huanlian: function (player) {
+      if (player.storage.furrykill_huanlian == true)
+        return '转换技，阳：出牌阶段，你可以观看牌堆顶的三张牌，选择一名本回合未以此法指定过的角色并展示其中一张。该角色选择：使用此牌，或获得其余两张牌。<span class="bluetext">阴：你的体力值发生变化后，可令当前回合角色观看牌堆顶的三张牌并展示其中一张。你选择：使用此牌，或获得其余两张牌。（剩余的牌置入弃牌堆）</span>';
+      return '转换技，<span class="bluetext">阳：出牌阶段，你可以观看牌堆顶的三张牌，选择一名本回合未以此法指定过的角色并展示其中一张。该角色选择：使用此牌，或获得其余两张牌。</span>阴：你的体力值发生变化后，可令当前回合角色观看牌堆顶的三张牌并展示其中一张。你选择：使用此牌，或获得其余两张牌。（剩余的牌置入弃牌堆）';
+    },
   }
   return {
     name: "FurryKill", editable: false, content: function (config, pack) {
@@ -121,11 +126,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
           return next;
         }
 
-        lib.element.player.countDifferentCard = function (position) {
+        lib.element.player.countDifferentCard = function (position, checkUsable) {
           var cards = this.getCards(position);
           var count = 0;
           var hasBasic = false, hasTrick = false, hasEquip = false;
           for (let i = 0; i < cards.length; i++) {
+            if (checkUsable && !this.canUse(cards[i])) continue;
             var type = get.type(cards[i]);
             if (type == 'basic') {
               hasBasic = true;
@@ -590,6 +596,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
         lib.dynamicTranslate["furrykill_chengming"] = dynamicTranslate.furrykill_chengming;
         lib.dynamicTranslate["furrykill_sanyuan"] = dynamicTranslate.furrykill_sanyuan;
         lib.dynamicTranslate["furrykill_suqing"] = dynamicTranslate.furrykill_suqing;
+        lib.dynamicTranslate["furrykill_huanlian"] = dynamicTranslate.furrykill_huanlian;
 
         lib.characterReplace["furrykill_yongshi"] = ["furrykill_yongshi", "sp_furrykill_yongshi"];
 
@@ -883,6 +890,20 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_heiyu", "furrykill_yuyan"],
                 ["des:狱炎之翼"],
               ],
+              furrykill_asang: [
+                "male",
+                "furrykill_dog",
+                4,
+                ["furrykill_gongfa", 'furrykill_zhenglve'],
+                ["des:桑菜"],
+              ],
+              furrykill_baiyi: [
+                "male",
+                "furrykill_fox",
+                3,
+                ["furrykill_huanlian", "furrykill_yuhuo"],
+                ["des:小白兔"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -917,6 +938,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_yunlan: "云岚",
               furrykill_zhanhou: "战吼",
               furrykill_shilingyi: "时凌翼",
+              furrykill_asang: "阿桑",
+              furrykill_baiyi: "白逸",
             },
           },
           characterTitle: {
@@ -1452,8 +1475,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     player.send(func, player, event.videoId);
                   }
                   event.dialog = func(player, event.videoId);
-                  if(!event.isMine()){
-                    event.dialog.style.display='none';
+                  if (!event.isMine()) {
+                    event.dialog.style.display = 'none';
                   }
 
                   var cardFunc = function () {
@@ -1484,8 +1507,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     replace: {}
                   });
                   'step 1'
-                  if(player.isOnline2()){
-                    player.send('closeDialog',event.videoId);
+                  if (player.isOnline2()) {
+                    player.send('closeDialog', event.videoId);
                   }
                   event.totalCards = 0;
                   if (result.bool) {
@@ -2079,7 +2102,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw();
                   event.finish();
                   'step 2';
-                  var count = player.countDifferentCard('he');
+                  var count = player.countDifferentCard('he', true);
                   var list = ['弃置三张类别不同的牌', '结束出牌阶段'];
                   if (count < 3) {
                     list.remove('弃置三张类别不同的牌');
@@ -2643,7 +2666,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   'step 0';
-                  var count = trigger.target.countDifferentCard('he');
+                  var count = trigger.target.countDifferentCard('he', true);
                   var dropCount = Math.min(player.storage.mingzhi.length, 3);
 
                   if (count < dropCount) event.goto(2);
@@ -5210,6 +5233,371 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_shuwei: {
+                trigger: { player: "phaseEnd" },
+                content: function () {
+                  'step 0';
+                  player.chooseTarget('请选择【戍卫】的目标', lib.translate.furrykill_shuwei_info, function (card, player, target) {
+                    return true;
+                  }).set('ai', function (target) {
+                    return get.attitude(_status.event.player, target) - target.hp;;
+                  }).animate = false;
+                  'step 1';
+                  if (result.bool) {
+                    var target = result.targets[0];
+                    target.storage.furrykill_shuwei2 = player;
+                    target.addSkill('furrykill_shuwei2');
+                  }
+                },
+                group: ['furrykill_shuwei_remove'],
+                subSkill: {
+                  remove: {
+                    trigger: { player: "phaseZhunbeiBegin" },
+                    charlotte: true,
+                    forced: true,
+                    filter: function (event, player) {
+                      return game.countPlayer(p => p.hasSkill('furrykill_shuwei2')) > 0;
+                    },
+                    content: function () {
+                      var players = game.filterPlayer(p => p.hasSkill('furrykill_shuwei2'));
+                      players.forEach(p => {
+                        p.removeSkill('furrykill_shuwei2');
+                      });
+                      player.loseHp();
+                    },
+                    sub: true,
+                  }
+                }
+              },
+              furrykill_shuwei2: {
+                direct: true,
+                charlotte: true,
+                trigger: { player: "damageEnd" },
+                content: function () {
+                  'step 0';
+                  player.storage.furrykill_shuwei2.logSkill('furrykill_shuwei');
+                  player.recover();
+                  if (player.storage.furrykill_shuwei2.isAlive()) {
+                    player.storage.furrykill_shuwei2.draw();
+                  }
+                  'step 1';
+                  player.removeSkill('furrykill_shuwei2');
+                },
+                onremove: function (player, skill) {
+                  delete player.storage.furrykill_shuwei2;
+                },
+              },
+
+              furrykill_huanlian: {
+                mark: true,
+                locked: false,
+                zhuanhuanji: true,
+                marktext: "☯",
+                intro: {
+                  content: function (storage, player, skill) {
+                    var str = !player.storage.furrykill_huanlian
+                      ? "出牌阶段，你可以观看牌堆顶的三张牌，选择一名本回合未以此法指定过的角色并展示其中一张。该角色选择：使用此牌，或获得其余两张牌。"
+                      : "你的体力值发生变化后，可令当前回合角色观看牌堆顶的三张牌并展示其中一张。你选择：使用此牌，或获得其余两张牌。（剩余的牌置入弃牌堆）";
+                    return str;
+                  },
+                },
+                group: ["furrykill_huanlian_1", "furrykill_huanlian_2", "furrykill_huanlian_count"],
+                subSkill: {
+                  1: {
+                    prompt2: "出牌阶段，你可以观看牌堆顶的三张牌，选择一名本回合未以此法指定过的角色并展示其中一张。该角色选择：使用此牌，或获得其余两张牌。",
+                    enable: "phaseUse",
+                    audio: 2,
+                    filter: function (event, player) {
+                      return !player.storage.furrykill_huanlian
+                        && game.hasPlayer(p => !player.storage.furrykill_huanlian_1.contains(p));
+                    },
+                    content: function () {
+                      'step 0';
+                      player.changeZhuanhuanji("furrykill_huanlian");
+                      player.markSkill("furrykill_huanlian");
+
+                      event.cards = get.cards(3);
+                      game.cardsGotoOrdering(event.cards);
+                      event.watcher = player;
+                      var content = ['牌堆顶的三张牌', event.cards];
+                      game.log(event.watcher, '观看了', '#y牌堆顶的三张牌');
+                      event.watcher.chooseControl('ok').set('dialog', content);
+                      'step 1';
+                      event.watcher.chooseTarget(true,
+                        function (card, player, target) {
+                          return !player.storage.furrykill_huanlian_1.contains(target);
+                        }
+                      ).set('prompt', '选择一名本回合未以此法指定过的角色').set('ai', function (target) {
+                        return get.attitude(player, target);
+                      });
+                      'step 2';
+                      if (result.bool) {
+                        event.target = result.targets[0];
+                        player.storage.furrykill_huanlian_1.add(event.target);
+                        event.watcher.chooseButton(['选择要展示的牌', event.cards], true).set('ai', function (button) {
+                          return _status.event.from.getUseValue(button.link);
+                        }).set('from', event.target);
+                      }
+                      'step 3';
+                      if (result.bool) {
+                        event.showCard = result.links[0];
+                        event.cards = event.cards.filter(c => c != event.showCard);
+                        event.watcher.showCards(event.showCard);
+                      }
+                      'step 4';
+                      if (event.showCard.name == 'shan' || !event.target.hasUseTarget(event.showCard)) {
+                        event.goto(7);
+                      } else {
+                        event.choice1 = '使用' + get.translation(event.showCard);
+                        var list = [event.choice1, '获得其余两张牌'];
+                        var next = event.target.chooseControl(list, true, function () {
+                          if (_status.event.from.getUseValue(_status.event.card))
+                            return _status.event.choice1;
+                          return '获得其余两张牌';
+                        })
+                        next.set('from', event.target);
+                        next.set('card', event.showCard);
+                        next.set('choice1', event.choice1);
+                      }
+                      'step 5';
+                      if (result.control == event.choice1) {
+                        event.target.chooseUseTarget(false, event.showCard, false);
+                      } else {
+                        event.goto(7);
+                      }
+                      'step 6';
+                      if (result.bool) event.finish();
+                      'step 7';
+                      event.target.gain(event.cards, 'draw');
+                    },
+                    sub: true,
+                  },
+                  2: {
+                    prompt2: "你的体力值发生变化后，可令当前回合角色观看牌堆顶的三张牌并展示其中一张。你选择：使用此牌，或获得其余两张牌。（剩余的牌置入弃牌堆）",
+                    trigger: { player: "changeHp" },
+                    audio: 2,
+                    filter: function (event, player) {
+                      return player.storage.furrykill_huanlian;
+                    },
+                    content: function () {
+                      'step 0';
+                      player.changeZhuanhuanji("furrykill_huanlian");
+                      player.markSkill("furrykill_huanlian");
+
+                      event.cards = get.cards(3);
+                      game.cardsGotoOrdering(event.cards);
+                      var content = ['牌堆顶的三张牌', event.cards];
+                      event.watcher = _status.currentPhase;
+                      game.log(event.watcher, '观看了', '#y牌堆顶的三张牌');
+                      event.watcher.chooseControl('ok').set('dialog', content);
+                      'step 1';
+                      event.target = player;
+                      'step 2';
+                      event.watcher.chooseButton(['选择要展示的牌', event.cards], true).set('ai', function (button) {
+                        return _status.event.from.getUseValue(button.link);
+                      }).set('from', event.target);
+                      'step 3';
+                      if (result.bool) {
+                        event.showCard = result.links[0];
+                        event.cards = event.cards.filter(c => c != event.showCard);
+                        event.watcher.showCards(event.showCard);
+                      }
+                      'step 4';
+                      if (event.showCard.name == 'shan' || !event.target.hasUseTarget(event.showCard)) {
+                        event.goto(7);
+                      } else {
+                        event.choice1 = '使用' + get.translation(event.showCard);
+                        var list = [event.choice1, '获得其余两张牌'];
+                        var next = event.target.chooseControl(list, true, function () {
+                          if (_status.event.from.getUseValue(_status.event.card))
+                            return _status.event.choice1;
+                          return '获得其余两张牌';
+                        })
+                        next.set('from', event.target);
+                        next.set('card', event.showCard);
+                        next.set('choice1', event.choice1);
+                      }
+                      'step 5';
+                      if (result.control == event.choice1) {
+                        event.target.chooseUseTarget(false, event.showCard, false);
+                      } else {
+                        event.goto(7);
+                      }
+                      'step 6';
+                      if (result.bool) event.finish();
+                      'step 7';
+                      event.target.gain(event.cards, 'draw');
+                    },
+                    sub: true,
+                  },
+                  count: {
+                    trigger: { player: "phaseBegin" },
+                    direct: true,
+                    charlotte: true,
+                    priority: 201,
+                    content: function () {
+                      player.storage.furrykill_huanlian_1 = [];
+                    },
+                    sub: true,
+                  },
+                }
+              },
+
+              furrykill_yuhuo: {
+                audio: 2,
+                init: function (player) {
+                  player.storage.furrykill_yuhuo_last = -1;
+                  player.storage.furrykill_yuhuo = false;
+                },
+                limited: true,
+                unique: true,
+                trigger: { player: "phaseZhunbei" },
+                filter: function (event, player) {
+                  if (player.storage.furrykill_yuhuo == true) return false;
+                  return player.hp == player.storage.furrykill_yuhuo_last;
+                },
+                skillAnimation: true,
+                animationColor: "orange",
+                content: function () {
+                  'step 0';
+                  player.awakenSkill('furrykill_yuhuo');
+                  player.storage.furrykill_yuhuo = true;
+                  'step 1';
+                  player.gainMaxHp();
+                  'step 2';
+                  player.chooseTarget('造成1点火焰伤害或取消回复1点体力', false, function (card, player, target) {
+                    return true;
+                  }).set('ai', function (target) {
+                    return get.damageEffect(target, _status.event.player, _status.event.player, 'fire');
+                  });
+                  'step 3';
+                  if (result.bool) {
+                    var target = result.targets[0];
+                    player.line(target, 'fire');
+                    target.damage(1, 'fire');
+                  } else {
+                    player.recover();
+                  }
+                },
+                intro: {
+                  content: "limited",
+                },
+                group: ['furrykill_yuhuo_end'],
+                subSkill: {
+                  end: {
+                    trigger: { player: "phaseEnd" },
+                    direct: true,
+                    charlotte: true,
+                    priority: 201,
+                    content: function () {
+                      player.storage.furrykill_yuhuo_last = player.hp;
+                    },
+                    sub: true,
+                  }
+                }
+              },
+
+              furrykill_gongfa: {
+                enable: "phaseUse",
+                position: "hes",
+                viewAs: function (cards, player) {
+                  var name = false;
+                  switch (get.type(cards[0], 'trick')) {
+                    case 'trick': name = 'shunshou'; break;
+                    case 'equip': name = 'guohe'; break;
+                  }
+                  if (name) return { name: name };
+                  return null;
+                },
+                filterCard: function (card, player, event) {
+                  var cardType = get.type(card, 'trick');
+                  var cardColor = get.color(card);
+                  return (cardType == 'trick' && cardColor == 'red')
+                    || (cardType == 'equip' && cardColor == 'black');
+                },
+                check: function (card) { return 5 - get.value(card) },
+                ai: {
+                  basic: {
+                    order: 9,
+                    useful: 5,
+                    value: 5,
+                  },
+                  result: {
+                    player: function (player) {
+                      return player.getExpansions('tuntian').length - 1;
+                    },
+                    target: function (player, target) {
+                      var att = get.attitude(player, target);
+                      var nh = target.countCards('h');
+                      if (att > 0) {
+                        if (target.countCards('j', function (card) {
+                          var cardj = card.viewAs ? { name: card.viewAs } : card;
+                          return get.effect(target, cardj, target, player) < 0;
+                        }) > 0) return 3;
+                        if (target.getEquip('baiyin') && target.isDamaged() &&
+                          get.recoverEffect(target, player, player) > 0) {
+                          if (target.hp == 1 && !target.hujia) return 1.6;
+                        }
+                        if (target.countCards('e', function (card) {
+                          if (get.position(card) == 'e') return get.value(card, target) < 0;
+                        }) > 0) return 1;
+                      }
+                      var es = target.getCards('e');
+                      var noe = (es.length == 0 || target.hasSkillTag('noe'));
+                      var noe2 = (es.filter(function (esx) {
+                        return get.value(esx, target) > 0;
+                      }).length == 0);
+                      var noh = (nh == 0 || target.hasSkillTag('noh'));
+                      if (noh && (noe || noe2)) return 0;
+                      if (att <= 0 && !target.countCards('he')) return 1.5;
+                      return -1.5;
+                    },
+                  },
+                },
+              },
+
+              furrykill_zhenglve: {
+                audio: 2,
+                trigger: { global: ["gainAfter", "loseAfter"] },
+                filter: function (event) {
+                  var evt = event;
+                  if (event.name == 'lose') {
+                    if (event.type != 'discard') return false;
+                    evt = event.getParent();
+                  }
+                  var player = evt[event.name == 'gain' ? 'source' : 'player'];
+                  if (!player || player.isDead()) return false;
+                  if (evt[event.name == 'gain' ? 'bySelf' : 'notBySelf'] != true) return false;
+                  if (event.name == 'lose') return event.hs.length > 0;
+                  if (player.countCards('he') == 0) return false;
+                  return event.relatedLose && event.relatedLose.hs && event.relatedLose.hs.length > 0;
+                },
+                check: function (event, player) {
+                  return get.attitude(player, event[event.name == 'gain' ? 'source' : 'player']) > 2;
+                },
+                logTarget: function (event) {
+                  return event[event.name == 'gain' ? 'source' : 'player'];
+                },
+                content: function () {
+                  "step 0";
+                  event.order = trigger[trigger.name == 'gain' ? 'source' : 'player'];
+                  event.order.draw(2);
+                  "step 1";
+                  player.chooseCard('he', '将一张牌置于牌堆顶', true);
+                  "step 2";
+                  if (result.bool) {
+                    player.$throw(get.position(result.cards[0]) == 'e' ? result.cards[0] : 1, 1000);
+                    game.log(player, '将', get.position(result.cards[0]) == 'e' ? result.cards[0] : '#y一张手牌', '置于了牌堆顶');
+                    player.lose(result.cards, ui.cardPile, 'insert');
+                  }
+                  "step 3";
+                  if (!event.order.isMinHandcard()) {
+                    player.loseHp();
+                    player.draw();
+                  }
+                },
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -5374,6 +5762,16 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_heiyu_info: "限定技，出牌阶段，你可以令其他角色依次展示一张手牌，你选择令其使用此牌（你指定目标），或弃置此牌。",
               furrykill_yuyan: "狱眼",
               furrykill_yuyan_info: "锁定技，你对本回合中受到过伤害的角色使用牌时，摸一张牌；其他角色对你使用牌时，若你本回合已经受到过伤害，该角色需弃置一张牌。",
+              furrykill_shuwei: "戍卫",
+              furrykill_shuwei_info: "结束阶段，你可以秘密选择一名角色，令其获得卫，或者不选择。有卫的角色受到伤害后，其恢复一点体力，你摸一张牌，然后移除卫。准备阶段，若场上有卫，将之移除，然后你失去一点体力。",
+              furrykill_huanlian: "幻涟",
+              furrykill_huanlian_info: "转换技，阳：出牌阶段，你可以观看牌堆顶的三张牌，选择一名本回合未以此法指定过的角色并展示其中一张。该角色选择：使用此牌，或获得其余两张牌。阴：你的体力值发生变化后，可令当前回合角色观看牌堆顶的三张牌并展示其中一张。你选择：使用此牌，或获得其余两张牌。（剩余的牌置入弃牌堆）",
+              furrykill_yuhuo: "浴火",
+              furrykill_yuhuo_info: "限定技，准备阶段，若你的体力值与你上个回合结束时相同，你可以增加一点体力上限，然后恢复1点体力，或造成1点火焰伤害。",
+              furrykill_gongfa: "攻伐",
+              furrykill_gongfa_info: "你可以将一张红色锦囊牌当做【顺手牵羊】使用，或将一张黑色装备牌当做【过河拆桥】使用。",
+              furrykill_zhenglve: "整略",
+              furrykill_zhenglve_info: "你的回合外，一名角色的手牌被弃置或被其他角色获得后，你可以令其摸两张牌，并将一张牌置于牌堆顶。然后若其手牌数不为全场最少，你失去一点体力并摸一张牌。",
             },
           },
         }, "FurryKill");
@@ -5659,12 +6057,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.3.3</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.4</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.3.3",
+      version: "1.9.116.4",
     },
   }
 })
