@@ -38,6 +38,7 @@ window.noname_asset_list=[
 	"extension/FurryKill/furrykill_shilingyi.jpg",
 	"extension/FurryKill/furrykill_asang.jpg",
 	"extension/FurryKill/furrykill_baiyi.jpg",
+	"extension/FurryKill/furrykill_yiliyv.jpg",
 
 	'audio/background/aozhan_chaoming.mp3',
 	'audio/background/aozhan_online.mp3',

@@ -5796,9 +5796,17 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   ["furrykill_lvbing_jie", "furrykill_hanren_jie", "furrykill_ruiyan_jie"],
                   ["hiddenSkill", "des:珀瞳"],
                 ],
+                furrykill_yiliyv: [
+                  "male",
+                  "furrykill_wolf",
+                  3,
+                  ["furrykill_yvfa", "furrykill_suhui"],
+                  ["des:雷火交加"],
+                ],
               },
               translate: {
                 furrykill_anliang_jie: "界安谅",
+                furrykill_yiliyv: "伊烁煜",
               },
             },
             characterTitle: {
@@ -6035,6 +6043,116 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   },
                 },
 
+                furrykill_yvfa: {
+                  trigger: {
+                    global: "useCardToTarget",
+                  },
+                  usable:1,
+                  direct: true,
+                  priority: 5,
+                  filter: function (event, player) {
+                    if (event.card.name != 'sha' || event.target == player) return false;
+                    var nature = get.nature(event.card);
+                    if (nature == undefined) return false;
+                    if (nature != "thunder" && nature != "fire") return false;
+                    if (nature == "thunder" && event.target.countCards('h') == 0) return false;
+                    return player.countCards('he') > 0;
+                  },
+                  content: function () {
+                    'step 0';
+                    player.chooseToDiscard('he', '驭法：是否弃置一张牌？');
+                    'step 1';
+                    if (!result.bool) {
+                      event.finish();
+                    } else {
+                      var nature = get.nature(trigger.card);
+                      if (nature == "thunder") {
+                        var cards = trigger.target.getCards('h');
+                        if (cards.length > 3) cards = cards.randomGets(3)
+                        player.furrykillDiscoverCard('驭法：从' + get.translation(trigger.target) + '的手牌中发现一张牌', cards, true);
+                      } else {
+                        event.goto(3);
+                      }
+                    }
+                    'step 2';
+                    var card = result.card;
+                    player.gain(card, "giveauto");
+                    player.logSkill('furrykill_yvfa');
+                    game.log(player, '从', trigger.target, '的手牌中发现了', card);
+                    player.showCards(card);
+                    if (get.color(card) == 'black') {
+                      trigger.directHit.addArray(game.players);
+                    }
+                    event.finish();
+                    'step 3';
+                    var next = player.chooseToUse({ name: 'sha' }, '驭法：是否对' + get.translation(trigger.target) + '使用一张杀', trigger.target, -1);
+                    next.oncard = function (card, player) {
+                      player.logSkill('furrykill_yvfa');
+                      if (get.nature(card) != undefined) {
+                        player.addTempSkill('furrykill_yvfa2');
+                      }
+                    }
+                  }
+                },
+                furrykill_yvfa2: {
+                  trigger: { source: 'damageBegin' },
+                  forced: true,
+                  charlotte: true,
+                  filter: function (event) {
+                    return event.nature == 'fire' && event.notLink();
+                  },
+                  content: function () {
+                    trigger.num++;
+                  }
+                },
+
+                furrykill_suhui: {
+                  trigger: { global: "loseAfter" },
+                  filter: function (event, player) {
+                    if (event.type != 'discard') return false;
+                    var parentEvent = event.getParent("discardPlayerCard");
+                    if (parentEvent != {} && parentEvent.target != parentEvent.player) return false;
+                    if(!event.player.isAlive()) return false;
+                    if(event.player != player && !event.player.isPhaseUsing()) return false;
+                    var stat = player.getStat();
+                    if (!stat.furrykill_suhui) return true;
+                    return !stat.furrykill_suhui.contains(event.player);
+                  },
+                  check: function (event, player) {
+                    return get.attitude(player, event.player) > 2;
+                  },
+                  logTarget: function (event) {
+                    return event.player;
+                  },
+                  content: function () {
+                    "step 0"
+                    var stat = player.getStat();
+                    if (!stat.furrykill_suhui) {
+                      stat.furrykill_suhui = [];
+                    }
+                    stat.furrykill_suhui.push(trigger.player);
+                    "step 1"
+                    var count = 0;
+                    var cards = trigger.cards;
+                    var hasBasic = false, hasTrick = false, hasEquip = false;
+                    for (let i = 0; i < cards.length; i++) {
+                      var type = get.type(cards[i]);
+                      if (type == 'basic') {
+                        hasBasic = true;
+                      } else if (type == 'equip') {
+                        hasEquip = true;
+                      } else {
+                        hasTrick = true;
+                      }
+                      if (hasBasic && hasTrick && hasEquip) break;
+                    }
+                    if (hasBasic) count++;
+                    if (hasEquip) count++;
+                    if (hasTrick) count++;
+                    trigger.player.draw(count);
+                  },
+                },
+
               },
               translate: {
                 furrykill_lvbing_jie: "履冰",
@@ -6045,6 +6163,10 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 furrykill_hanren_jie_info: "结束阶段，你可以将一张牌置于武将牌上，称为霜。其他角色的出牌阶段开始时，你可以交给其一张霜，然后该角色不能使用、打出或弃置与霜类别相同的牌，直到此回合结束。其出牌阶段结束时，你可以对其执行〖锐眼〗的效果。",
                 furrykill_ruiyan_jie: "锐眼",
                 furrykill_ruiyan_jie_info: "出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其一种类别的手牌（你必须拥有此类别的牌），然后修改〖锐眼〗直到本轮结束；否则其获得你的一张牌。",
+                furrykill_yvfa: "驭法",
+                furrykill_yvfa_info: "每回合限一次，其他角色成为属性【杀】的目标后，你可以弃置一张牌，然后根据此【杀】的属性执行：</br>雷，从其手牌中发现一张牌并展示，若颜色为黑，此【杀】无法被响应；</br>火，可以对其使用一张【杀】，若你以此法使用的【杀】为属性杀，你本回合造成的火焰伤害+1。",
+                furrykill_suhui: "溯回",
+                furrykill_suhui_info: "每回合每名角色限一次，你弃置牌后，或其他角色于出牌阶段弃置牌后，可以令其摸X张牌。（X为弃置牌中包含的类别数）",
               },
             },
           }, "FurryKill");
@@ -6057,12 +6179,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.4</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.5</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.4",
+      version: "1.9.116.5",
     },
   }
 })
