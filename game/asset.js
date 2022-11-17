@@ -1,5 +1,5 @@
 window.noname_asset_list=[
-	'v1.9.116.4',
+	'v1.9.116.5',
 
 	"extension/FurryKill/furrykill.jpg",
 	"extension/FurryKill/furrykill_anliang.jpg",
