@@ -904,6 +904,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_huanlian", "furrykill_yuhuo"],
                 ["des:小白兔"],
               ],
+              // furrykill_tianqing: [
+              //   "male",
+              //   "furrykill_fox",
+              //   4,
+              //   ["furrykill_tq_shifeng", "furrykill_qingjin"],
+              //   ["des:青鸾青金"],
+              // ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -940,6 +947,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_shilingyi: "时凌翼",
               furrykill_asang: "阿桑",
               furrykill_baiyi: "白逸",
+              furrykill_tianqing: "天青",
             },
           },
           characterTitle: {
@@ -5598,6 +5606,22 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
               },
 
+              furrykill_tq_shifeng: {
+
+              },
+
+              furrykill_qingjin: {
+
+              },
+
+              furrykill_anyuan: {
+
+              },
+
+              furrykill_jinglei: {
+
+              },
+
             },
             dynamicTranslate: dynamicTranslate,
             translate: {
@@ -5772,6 +5796,14 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_gongfa_info: "你可以将一张红色锦囊牌当做【顺手牵羊】使用，或将一张黑色装备牌当做【过河拆桥】使用。",
               furrykill_zhenglve: "整略",
               furrykill_zhenglve_info: "你的回合外，一名角色的手牌被弃置或被其他角色获得后，你可以令其摸两张牌，并将一张牌置于牌堆顶。然后若其手牌数不为全场最少，你失去一点体力并摸一张牌。",
+              furrykill_tq_shifeng: "逝风",
+              furrykill_tq_shifeng_info: "出牌阶段限一次，你可以发现一张牌，然后用此牌与一名角色拼点，赢的角色需弃置两张牌（不足则全弃，没有则不弃），然后摸两张牌。",
+              furrykill_qingjin: "青金",
+              furrykill_qingjin_info: "觉醒技，结束阶段，若你本局游戏已累计拼点赢3次，你减少一点体力上限，获得惊雷；若你本局游戏已累计拼点没赢3次，你减少一点体力上限，获得暗渊。",
+              furrykill_anyuan: "暗渊",
+              furrykill_anyuan_info: "其他角色的牌在你的回合因弃置进入弃牌堆后，你可以摸等量的牌。",
+              furrykill_jinglei: "惊雷",
+              furrykill_jinglei_info: "你于弃牌阶段外一次失去至少两张牌时，可以造成一点雷电伤害。",
             },
           },
         }, "FurryKill");
@@ -6060,7 +6092,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   },
                   content: function () {
                     'step 0';
-                    player.chooseToDiscard('he', '驭法：是否弃置一张牌？');
+                    player.chooseToDiscard('he', '驭法：是否弃置牌对'+ get.translation(trigger.target) 
+                    +'发动驭法·'+get.translation(get.nature(trigger.card))+'？',
+                    [1, player.countCards('he')]);
                     'step 1';
                     if (!result.bool) {
                       event.finish();
@@ -6085,24 +6119,23 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     }
                     event.finish();
                     'step 3';
-                    var next = player.chooseToUse({ name: 'sha' }, '驭法：是否对' + get.translation(trigger.target) + '使用一张杀', trigger.target, -1);
-                    next.oncard = function (card, player) {
-                      player.logSkill('furrykill_yvfa');
-                      if (get.nature(card) != undefined) {
-                        player.addTempSkill('furrykill_yvfa2');
-                      }
-                    }
-                  }
-                },
-                furrykill_yvfa2: {
-                  trigger: { source: 'damageBegin' },
-                  forced: true,
-                  charlotte: true,
-                  filter: function (event) {
-                    return event.nature == 'fire' && event.notLink();
+                    player.chooseToUse({ name: 'sha' }, '驭法：是否对' + get.translation(trigger.target) + '使用一张杀', trigger.target, -1);
                   },
-                  content: function () {
-                    trigger.num++;
+                  group:['furrykill_yvfa_2'],
+                  subSkill: {
+                    2: {
+                      trigger: { source: 'damageBegin' },
+                      forced: true,
+                      filter: function (event) {
+                        var parentEvent = event.getParent("furrykill_yvfa");
+                        console.log(parentEvent)
+                        if (parentEvent.name != "furrykill_yvfa") return false;
+                        return event.card && event.nature && event.notLink();
+                      },
+                      content: function () {
+                        trigger.num++;
+                      }
+                    },
                   }
                 },
 
@@ -6164,7 +6197,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 furrykill_ruiyan_jie: "锐眼",
                 furrykill_ruiyan_jie_info: "出牌阶段限一次，你可以观看一名其他角色的手牌，若其中包含至少两种类别的牌，你可以选择其中一张获得或弃置你与其一种类别的手牌（你必须拥有此类别的牌），然后修改〖锐眼〗直到本轮结束；否则其获得你的一张牌。",
                 furrykill_yvfa: "驭法",
-                furrykill_yvfa_info: "每回合限一次，其他角色成为属性【杀】的目标后，你可以弃置一张牌，然后根据此【杀】的属性执行：</br>雷，从其手牌中发现一张牌并展示，若颜色为黑，此【杀】无法被响应；</br>火，可以对其使用一张【杀】，若你以此法使用的【杀】为属性杀，你本回合造成的火焰伤害+1。",
+                furrykill_yvfa_info: "每回合限一次，其他角色成为属性【杀】的目标后，你可以弃置至少一张牌，然后根据此【杀】的属性执行：</br>雷，从其手牌中发现一张牌并展示，若颜色为黑，此【杀】无法被响应；</br>火，可以对其使用一张【杀】，若你以此法使用的【杀】为属性杀，此【杀】造成的伤害+1。",
                 furrykill_suhui: "溯回",
                 furrykill_suhui_info: "每回合每名角色限一次，你弃置牌后，或其他角色于出牌阶段弃置牌后，可以令其摸X张牌。（X为弃置牌中包含的类别数）",
               },
