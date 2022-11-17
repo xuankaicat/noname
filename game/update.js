@@ -1,6 +1,6 @@
 window.noname_update={
 	version:'1.9.116.5',
-	update:'1.9.116.2',
+	update:'1.9.116.4',
 	changeLog:[
 		'十周年卞喜、胡昭、牛辅、界刘封、界SP太史慈、OL霍峻，十周年管亥',
 		'国战模式晋武将更新与技能调整',
