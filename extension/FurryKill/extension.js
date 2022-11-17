@@ -904,13 +904,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 ["furrykill_huanlian", "furrykill_yuhuo"],
                 ["des:小白兔"],
               ],
-              // furrykill_tianqing: [
-              //   "male",
-              //   "furrykill_fox",
-              //   4,
-              //   ["furrykill_tq_shifeng", "furrykill_qingjin"],
-              //   ["des:青鸾青金"],
-              // ],
+              furrykill_tianqing: [
+                "male",
+                "furrykill_fox",
+                4,
+                ["furrykill_tq_shifeng", "furrykill_qingjin"],
+                ["des:青鸾青金"],
+              ],
             },
             translate: {
               furrykill_shifeng: "时风",
@@ -5607,19 +5607,188 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               },
 
               furrykill_tq_shifeng: {
-
+                enable: "phaseUse",
+                usable: 1,
+                unique: true,
+                content: function () {
+                  "step 0";
+                  var cards = get.cards(3);
+                  if (cards.length == 0) event.goto(2);
+                  var next = player.furrykillDiscoverCard('逝风：发现一张牌', cards, true);
+                  next.set("gotoOrdering", true);
+                  "step 1";
+                  var card = result.card;
+                  player.gain(card, "draw");
+                  player.storage.furrykill_tq_shifeng_pd = card;
+                  game.log(player, '从牌堆发现了', card);
+                  "step 2";
+                  if (game.hasPlayer(p => p != player && player.canCompare(p))) {
+                    player.chooseTarget(get.prompt2('furrykill_tq_shifeng'), true, function (card, player, target) {
+                      return player.canCompare(target);
+                    }).set('ai', function (target) {
+                      return -get.attitude(player, target) * (1 + target.countCards('e')) / (1 + target.countCards('j'));
+                    });
+                  } else {
+                    delete player.storage.furrykill_tq_shifeng_pd;
+                    event.finish();
+                  }
+                  "step 3";
+                  if (result.bool) {
+                    var target = result.targets[0];
+                    event.target = target;
+                    player.logSkill('furrykill_tq_shifeng', target);
+                    player.chooseToCompare(target);
+                  }
+                  else {
+                    delete player.storage.furrykill_tq_shifeng_pd;
+                    event.finish();
+                  }
+                  "step 4";
+                  if (result.bool) {
+                    event.win = true;
+                    player.chooseToDiscard('he', 2, true);
+                  } else {
+                    event.win = false;
+                    event.target.chooseToDiscard('he', 2, true);
+                  }
+                  "step 5";
+                  if (event.win) {
+                    player.draw(2);
+                  } else {
+                    event.target.draw(2);
+                  }
+                },
+                group: ['furrykill_tq_shifeng_use'],
+                subSkill: {
+                  use: {
+                    forced: true,
+                    direct: true,
+                    trigger: {
+                      player: 'chooseToCompareBegin',
+                    },
+                    filter: function (event, player) {
+                      var parentEvent = event.getParent("furrykill_tq_shifeng");
+                      if (parentEvent.name != "furrykill_tq_shifeng") return false;
+                      return player.storage.furrykill_tq_shifeng_pd;
+                    },
+                    content: function () {
+                      if (!trigger.fixedResult) trigger.fixedResult = {};
+                      trigger.fixedResult[player.playerid] = player.storage.furrykill_tq_shifeng_pd;
+                      delete player.storage.furrykill_tq_shifeng_pd;
+                    },
+                    sub: true,
+                  },
+                }
               },
 
               furrykill_qingjin: {
-
+                unique: true,
+                juexingji: true,
+                forced: true,
+                trigger: {
+                  player: "phaseEnd",
+                },
+                skillAnimation: true,
+                animationColor: "thunder",
+                init: function (player) {
+                  player.storage.furrykill_qingjin_win = 0;
+                  player.storage.furrykill_qingjin_lose = 0;
+                },
+                filter: function (event, player) {
+                  if (player.storage.furrykill_qingjin) return false;
+                  return player.storage.furrykill_qingjin_win >= 3 || player.storage.furrykill_qingjin_lose >= 3;
+                },
+                content: function () {
+                  "step 0";
+                  player.awakenSkill('furrykill_qingjin');
+                  player.storage.furrykill_qingjin = true;
+                  if (player.storage.furrykill_qingjin_win >= 3) {
+                    player.loseMaxHp();
+                    player.addSkill('furrykill_jinglei');
+                  }
+                  "step 1";
+                  if (player.storage.furrykill_qingjin_lose >= 3) {
+                    player.loseMaxHp();
+                    player.addSkill('furrykill_anyuan');
+                  }
+                },
+                group: ['furrykill_qingjin_count'],
+                subSkill: {
+                  count: {
+                    charlotte: true,
+                    forced: true,
+                    direct: true,
+                    trigger: {
+                      player: ['chooseToCompareAfter', 'compareMultipleAfter'],
+                      target: ['chooseToCompareAfter', 'compareMultipleAfter']
+                    },
+                    content: function () {
+                      if (player == trigger.player) {
+                        if (trigger.num1 > trigger.num2) {
+                          player.storage.furrykill_qingjin_win++;
+                        }
+                        else {
+                          player.storage.furrykill_qingjin_lose++;
+                        }
+                      }
+                      else {
+                        if (trigger.num1 < trigger.num2) {
+                          player.storage.furrykill_qingjin_win++;
+                        }
+                        else {
+                          player.storage.furrykill_qingjin_lose++;
+                        }
+                      }
+                    },
+                    sub: true,
+                  }
+                }
               },
 
               furrykill_anyuan: {
-
+                trigger: {
+                  global: "loseAfter",
+                },
+                filter: function (event, player) {
+                  if (event.type != 'discard') return false;
+                  if (player != _status.currentPhase) return false;
+                  if (player == event.player) return false;
+                  for (var i of event.cards2) {
+                    if (get.position(i, true) == 'd') return true;
+                  }
+                  return false;
+                },
+                content: function () {
+                  var cards = trigger.cards2.filter(function (i) {
+                    return get.position(i, true) == 'd';
+                  });
+                  player.draw(cards.length);
+                },
               },
 
               furrykill_jinglei: {
-
+                trigger: { player: "loseAfter" },
+                filter: function (event, player) {
+                  if (event.getParent('phaseDiscard').player == player) return false;
+                  var evt = event.getl(player);
+                  return evt && evt.cards2 && evt.cards2.length > 1;
+                },
+                direct: true,
+                content: function () {
+                  'step 0';
+                  player.chooseTarget('惊雷：是否选择一个目标并对其造成1点雷电伤害？', false, function (card, player, target) {
+                    return true;
+                  }).set('ai', function (target) {
+                    return get.damageEffect(target, _status.event.player, _status.event.player, 'thunder');
+                  });
+                  'step 1';
+                  if (result.bool) {
+                    var target = result.targets[0];
+                    player.logSkill('furrykill_jinglei', target);
+                    player.line(target, 'thunder');
+                    target.damage(1, 'thunder');
+                  }
+                },
               },
 
             },
@@ -6079,7 +6248,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   trigger: {
                     global: "useCardToTarget",
                   },
-                  usable:1,
+                  usable: 1,
                   direct: true,
                   priority: 5,
                   filter: function (event, player) {
@@ -6092,9 +6261,9 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   },
                   content: function () {
                     'step 0';
-                    player.chooseToDiscard('he', '驭法：是否弃置牌对'+ get.translation(trigger.target) 
-                    +'发动驭法·'+get.translation(get.nature(trigger.card))+'？',
-                    [1, player.countCards('he')]);
+                    player.chooseToDiscard('he', '驭法：是否弃置牌对' + get.translation(trigger.target)
+                      + '发动驭法·' + get.translation(get.nature(trigger.card)) + '？',
+                      [1, player.countCards('he')]);
                     'step 1';
                     if (!result.bool) {
                       event.finish();
@@ -6121,14 +6290,13 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     'step 3';
                     player.chooseToUse({ name: 'sha' }, '驭法：是否对' + get.translation(trigger.target) + '使用一张杀', trigger.target, -1);
                   },
-                  group:['furrykill_yvfa_2'],
+                  group: ['furrykill_yvfa_2'],
                   subSkill: {
                     2: {
                       trigger: { source: 'damageBegin' },
                       forced: true,
                       filter: function (event) {
                         var parentEvent = event.getParent("furrykill_yvfa");
-                        console.log(parentEvent)
                         if (parentEvent.name != "furrykill_yvfa") return false;
                         return event.card && event.nature && event.notLink();
                       },
@@ -6145,8 +6313,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     if (event.type != 'discard') return false;
                     var parentEvent = event.getParent("discardPlayerCard");
                     if (parentEvent != {} && parentEvent.target != parentEvent.player) return false;
-                    if(!event.player.isAlive()) return false;
-                    if(event.player != player && !event.player.isPhaseUsing()) return false;
+                    if (!event.player.isAlive()) return false;
+                    if (event.player != player && !event.player.isPhaseUsing()) return false;
                     var stat = player.getStat();
                     if (!stat.furrykill_suhui) return true;
                     return !stat.furrykill_suhui.contains(event.player);
@@ -6212,12 +6380,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.5</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.6</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.5",
+      version: "1.9.116.6",
     },
   }
 })

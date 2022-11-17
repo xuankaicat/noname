@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.116.5',
+	version:'1.9.116.6',
 	update:'1.9.116.4',
 	changeLog:[
 		'noname:',
@@ -7,7 +7,7 @@ window.noname_update={
 		'国战模式晋武将更新与技能调整',
 		'其他技能调整和bug修复',
 		'furrykill:',
-		'伊烁煜',
+		'天青',
 	],
 	files:[
 		'extension/FurryKill/extension.js',
