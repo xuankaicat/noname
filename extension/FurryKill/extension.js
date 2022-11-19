@@ -5647,6 +5647,8 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   if (result.bool) {
                     event.win = true;
                     player.chooseToDiscard('he', 2, true);
+                  } else if (result.tie) {
+                    event.finish();
                   } else {
                     event.win = false;
                     event.target.chooseToDiscard('he', 2, true);
@@ -6380,12 +6382,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.6</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.6.1</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.6",
+      version: "1.9.116.6.1",
     },
   }
 })

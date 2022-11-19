@@ -1,5 +1,5 @@
 window.noname_update={
-	version:'1.9.116.6',
+	version:'1.9.116.6.1',
 	update:'1.9.116.4',
 	changeLog:[
 		'noname:',
@@ -8,6 +8,7 @@ window.noname_update={
 		'其他技能调整和bug修复',
 		'furrykill:',
 		'天青',
+		'BUG修复'
 	],
 	files:[
 		'extension/FurryKill/extension.js',
