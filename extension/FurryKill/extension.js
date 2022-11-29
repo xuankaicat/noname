@@ -126,12 +126,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
           return next;
         }
 
-        lib.element.player.countDifferentCard = function (position, checkUsable) {
+        lib.element.player.countDifferentCard = function (position, checkDiscardable, evt) {
           var cards = this.getCards(position);
           var count = 0;
           var hasBasic = false, hasTrick = false, hasEquip = false;
           for (let i = 0; i < cards.length; i++) {
-            if (checkUsable && !this.canUse(cards[i])) continue;
+            if (checkDiscardable && !lib.filter.cardDiscardable(cards[i],this, evt)) continue;
             var type = get.type(cards[i]);
             if (type == 'basic') {
               hasBasic = true;
@@ -2110,7 +2110,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   player.draw();
                   event.finish();
                   'step 2';
-                  var count = player.countDifferentCard('he', true);
+                  var count = player.countDifferentCard('he', true, event);
                   var list = ['弃置三张类别不同的牌', '结束出牌阶段'];
                   if (count < 3) {
                     list.remove('弃置三张类别不同的牌');
@@ -2674,7 +2674,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                 },
                 content: function () {
                   'step 0';
-                  var count = trigger.target.countDifferentCard('he', true);
+                  var count = trigger.target.countDifferentCard('he', true, event);
                   var dropCount = Math.min(player.storage.mingzhi.length, 3);
 
                   if (count < dropCount) event.goto(2);
@@ -5591,7 +5591,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                   event.order = trigger[trigger.name == 'gain' ? 'source' : 'player'];
                   event.order.draw(2);
                   "step 1";
-                  player.chooseCard('he', '将一张牌置于牌堆顶', true);
+                  event.order.chooseCard('he', '将一张牌置于牌堆顶', true);
                   "step 2";
                   if (result.bool) {
                     player.$throw(get.position(result.cards[0]) == 'e' ? result.cards[0] : 1, 1000);
@@ -5966,7 +5966,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_gongfa: "攻伐",
               furrykill_gongfa_info: "你可以将一张红色锦囊牌当做【顺手牵羊】使用，或将一张黑色装备牌当做【过河拆桥】使用。",
               furrykill_zhenglve: "整略",
-              furrykill_zhenglve_info: "你的回合外，一名角色的手牌被弃置或被其他角色获得后，你可以令其摸两张牌，并将一张牌置于牌堆顶。然后若其手牌数不为全场最少，你失去一点体力并摸一张牌。",
+              furrykill_zhenglve_info: "你的回合外，一名角色的手牌被弃置或被其他角色获得后，你可以令其摸两张牌，然后将一张牌置于牌堆顶。然后若其手牌数不为全场最少，你失去一点体力并摸一张牌。",
               furrykill_tq_shifeng: "逝风",
               furrykill_tq_shifeng_info: "出牌阶段限一次，你可以发现一张牌，然后用此牌与一名角色拼点，赢的角色需弃置两张牌（不足则全弃，没有则不弃），然后摸两张牌。",
               furrykill_qingjin: "青金",
@@ -6382,12 +6382,12 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
     }, package: {
       intro: `
         <img src='extension/FurryKill/furrykill.jpg' width='100%' /></br>
-				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.6.1</span>
+				<span style='font-weight: bold;'>小动物的三国杀 v1.9.116.6.2</span>
 			`,
       author: "SwordFox & XuankaiCat",
       diskURL: "",
       forumURL: "",
-      version: "1.9.116.6.1",
+      version: "1.9.116.6.2",
     },
   }
 })
