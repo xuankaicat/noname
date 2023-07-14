@@ -68,6 +68,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			shen_guanyu:['shen_guanyu','tw_shen_guanyu'],
 			shen_sunquan:['shen_sunquan','junk_sunquan'],
 			shen_lvmeng:['tw_shen_lvmeng','shen_lvmeng'],
+			shen_machao:['shen_machao','ps_shen_machao'],
 		},
 		characterFilter:{
 			shen_diaochan:function(mode){
@@ -842,7 +843,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					return false;
 				},
 				delay:false,
-				locked:true,
+				locked:false,
 				filterTarget:function(card,player,target){
 					var event=_status.event,evt=event;
 					if(event._backup) evt=event._backup;
@@ -928,7 +929,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 							delete evt.result.used;
 							evt.result.card=get.autoViewAs({
 								name:name,
-								cards:[result],
+								cards:[result.links[0]],
 								storage:{shouli:true},
 							},result.links);
 							evt.result.cards=[result.links[0]];
@@ -983,6 +984,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 							player:'enterGame',
 						},
 						forced:true,
+						locked:false,
 						filter:function(event,player){
 							return event.name!='phase'||game.phaseNumber==0;
 						},
@@ -2169,9 +2171,11 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 							trigger.cancel();
 						},
 						ai:{
-							target:function(card,player,target){
-								if(card&&card.name=='qizhengxiangsheng') return 'zerotarget';
-							},
+							effect:{
+								target:function(card,player,target){
+									if(card&&card.name=='qizhengxiangsheng') return 'zerotarget';
+								},
+							}
 						},
 					},
 					global:{
@@ -2596,61 +2600,6 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					trigger.targets.addArray(targets);
 				},
 			},
-			// reshuishi:{
-			// 	audio:'shuishi',
-			// 	enable:'phaseUse',
-			// 	usable:1,
-			// 	filter:function(event,player){
-			// 		return player.maxHp<10;
-			// 	},
-			// 	content:function(){
-			// 		'step 0'
-			// 		event.cards=[];
-			// 		event.suits=[];
-			// 		'step 1'
-			// 		player.judge(function(result){
-			// 			var evt=_status.event.getParent('reshuishi');
-			// 			if(evt&&evt.suits&&evt.suits.contains(get.suit(result))) return 0;
-			// 			return 1;
-			// 		}).set('callback',function(){
-			// 			event.getParent().orderingCards.remove(event.judgeResult.card);
-			// 		}).judge2=function(result){
-			// 			return result.bool?true:false;
-			// 		};
-			// 		'step 2'
-			// 		event.cards.push(result.card);
-			// 		if(result.bool&&player.maxHp<10){
-			// 			event.suits.push(result.suit);
-			// 			player.gainMaxHp();
-			// 			event.goto(1);
-			// 		}
-			// 		else{
-			// 			cards=cards.filterInD();
-			// 			if(cards.length) player.chooseTarget('将'+get.translation(cards)+'交给一名角色',true).set('ai',function(target){
-			// 				var player=_status.event.player;
-			// 				var att=get.attitude(player,target)/Math.sqrt(1+target.countCards('h'));
-			// 				if(target.hasSkillTag('nogain')) att/=10;
-			// 				return att;
-			// 			});
-			// 			else event.finish();
-			// 		}
-			// 		'step 3'
-			// 		if(result.bool){
-			// 			var target=result.targets[0];
-			// 			event.target=target;
-			// 			player.line(target,'green');
-			// 			target.gain(cards,'gain2').giver=player;
-			// 		}
-			// 		'step 4'
-			// 		if(target.isMaxHandcard()) player.loseMaxHp();
-			// 	},
-			// 	ai:{
-			// 		order:1.2,
-			// 		result:{
-			// 			player:1,
-			// 		},
-			// 	},
-			// },
 			reshuishi:{
 				audio:'shuishi',
 				enable:'phaseUse',
@@ -4325,11 +4274,11 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				trigger:{global:'judge'},
 				direct:true,
 				filter:function(event,player){
-					return player.countCards('he')>0&&player.hasMark('renjie');
+					return player.countCards('hes')>0&&player.hasMark('renjie');
 				},
 				content:function(){
 					"step 0"
-					player.chooseCard('是否弃置一枚“忍”，并发动〖鬼才〗？','he',function(card){
+					player.chooseCard('是否弃置一枚“忍”，并发动〖鬼才〗？','hes',function(card){
 						var player=_status.event.player;
 						var mod2=game.checkMod(card,player,'unchanged','cardEnabled2',player);
 						if(mod2!='unchanged') return mod2;
@@ -4826,6 +4775,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					player:'enterGame',
 				},
 				forced:true,
+				locked:false,
 				filter:function(event,player){
 					return (event.name!='phase'||game.phaseNumber==0);
 				},
@@ -4859,8 +4809,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						gains.removeArray(player.getCards('h'));
 						if(!pushs.length||pushs.length!=gains.length) return;
 						player.addToExpansion(pushs,player,'giveAuto').gaintag.add('qixing');
-						game.log(player,'将',pushs,'作为“星”置于武将牌上');
-						player.gain(gains,'gain2');
+						//game.log(player,'将',pushs,'作为“星”置于武将牌上');
+						player.gain(gains,'draw');
 					}
 				},
 				intro:{
@@ -4925,7 +4875,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						player.logSkill('qixing2');
 						player.addToExpansion(pushs,player,'giveAuto').gaintag.add('qixing');
 						game.log(player,'将',pushs,'作为“星”置于武将牌上');
-						player.gain(gains,'gain2');
+						player.gain(gains,'draw');
 					}
 				},
 			},
@@ -6279,7 +6229,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					'1':{
 						audio:'drlt_jieying',
 						trigger:{
-							player:'phaseZhunbeiBegin'
+							player:'phaseBegin'
 						},
 						forced:true,
 						filter:function(event,player){
@@ -6881,7 +6831,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			shen_machao:'神马超',
 			shouli:'狩骊',
 			shouli_backup:'狩骊',
-			shouli_info:'锁定技。①游戏开始时，你令场上所有角色从你的下家起，依次使用牌堆中的一张不为赠物的坐骑牌。②你可以将场上的一张进攻坐骑牌当做【杀】（无任何次数限制），防御坐骑牌当做【闪】使用或打出。若此坐骑牌的拥有者不为你，则其非锁定技于本回合内失效。且当你或其于本回合内受到伤害时，此伤害+1且改为雷属性。',
+			shouli_info:'①游戏开始时，你令场上所有角色从你的下家起，依次使用牌堆中的一张不为赠物的坐骑牌。②你可以将场上的一张进攻坐骑牌当做【杀】（无任何次数限制），防御坐骑牌当做【闪】使用或打出。若此坐骑牌的拥有者不为你，则其非锁定技于本回合内失效。且当你或其于本回合内受到伤害时，此伤害+1且改为雷属性。',
 			hengwu:'横骛',
 			hengwu_info:'当你使用或打出有花色的牌时，若你的手牌区内没有与此牌花色相同的牌，则你可以摸X张牌（X为场上装备区内花色与此牌相同的牌数）。',
 			hengwu_append:'<span style="font-family: yuanli">棘手，怀念，摧毁！</span>',
@@ -6907,7 +6857,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			twwuhun_info:'锁定技。①当你受到其他角色造成的1点伤害后，你令伤害来源获得1枚“梦魇”标记。②当你对有“梦魇”标记的其他角色造成伤害后，你令其获得一枚“梦魇”标记。③当你死亡时，你可进行判定。若结果不为【桃】或【桃园结义】，则你选择至少一名拥有“梦魇”标记的角色。令这些角色各自失去X点体力（X为其“梦魇”标记数）。',
 			shen_zhangfei:'神张飞',
 			shencai:'神裁',
-			shencai_info:'①出牌阶段限一次，你可以令一名其他角色进行判定。你获得此判定牌，然后若此判定牌：包含以下要素中的任意一个，则其失去已有的下列效果，并获得对应的效果：{⒈体力：当其受到伤害后，其失去等量的体力、⒉武器：其不能使用牌响应杀、⒊打出：当其失去手牌后，其再随机弃置一张手牌（不嵌套触发）、⒋距离：其的结束阶段开始时，其翻面}；若均不包含，你获得其一张牌，其获得一枚“死”并获得如下效果：其的角色手牌上限-X、其的回合结束时，若X大于场上存活人数，则其死亡（X为其“死”标记数）。',
+			shencai_info:'出牌阶段限一次，你可以令一名其他角色进行判定。你获得此判定牌，然后若此判定牌：包含以下要素中的任意一个，则其失去已有的下列效果，并获得对应的效果：{⒈体力：当其受到伤害后，其失去等量的体力、⒉武器：其不能使用牌响应杀、⒊打出：当其失去手牌后，其再随机弃置一张手牌（不嵌套触发）、⒋距离：其的结束阶段开始时，其翻面}；若均不包含，你获得其区域里的一张牌，其获得一枚“死”并获得如下效果：其的角色手牌上限-X、其的回合结束时，若X大于场上存活人数，则其死亡（X为其“死”标记数）。',
 			xunshi:'巡使',
 			xunshi_info:'锁定技。①你手牌区内所有的多目标锦囊牌均视为花色为none的普【杀】。②你使用颜色为none的牌无距离和次数限制。③当你使用无颜色的牌选择目标后，你令你的〖神裁〗的发动次数上限+1（至多为5），然后可以为此牌增加任意个目标。',
 			shen_zhangjiao:'神张角',

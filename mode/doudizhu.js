@@ -1837,8 +1837,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 			player:{
 				getTopCards:function(num){
 					if(typeof num!='number') num=1;
-					if(num==0) {card=true;num=1;}
-					if(num<0) num=1;
+					if(num<=0) num=1;
 					var cards;
 					var player=this;
 					if(player.storage.doudizhu_cardPile&&player.storage.doudizhu_cardPile.length){
@@ -1851,7 +1850,13 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					else game.updateRoundNumber();
 					return cards;
 				},
-				hasZhuSkill:function(){return false;},
+				hasZhuSkill:function(skill,player){
+					if(!this.hasSkill(skill)) return false;
+					for(var i in this.storage){
+						if(i.indexOf('zhuSkill_')==0&&this.storage[i].contains(skill)) return true;
+					}
+					return false;
+				},
 				$dieAfter:function(){
 					if(_status.video) return;
 					if(!this.node.dieidentity){
