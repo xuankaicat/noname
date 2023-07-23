@@ -5228,7 +5228,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
                     locked: true,
                     direct: true,
                     filter: function (event, player) {
-                      return event.targets.some(t => {
+                      return get.type(event.card, false) != 'equip' && event.targets.some(t => {
                         return lib.skill.furrykill_yuyan.hasHistory(t);
                       });
                     },
@@ -5956,7 +5956,7 @@ game.import("extension", function (lib, game, ui, get, ai, _status) {
               furrykill_heiyu: "黑羽",
               furrykill_heiyu_info: "限定技，出牌阶段，你可以令其他角色依次展示一张手牌，你选择令其使用此牌（你指定目标），或弃置此牌。",
               furrykill_yuyan: "狱眼",
-              furrykill_yuyan_info: "锁定技，你对本回合中受到过伤害的角色使用牌时，摸一张牌；其他角色对你使用牌时，若你本回合已经受到过伤害，该角色需弃置一张牌。",
+              furrykill_yuyan_info: "锁定技，你对本回合中受到过伤害的角色使用非装备牌时，摸一张牌；其他角色对你使用牌时，若你本回合已经受到过伤害，该角色需弃置一张牌。",
               furrykill_shuwei: "戍卫",
               furrykill_shuwei_info: "结束阶段，你可以秘密选择一名角色，令其获得卫，或者不选择。有卫的角色受到伤害后，其恢复一点体力，你摸一张牌，然后移除卫。准备阶段，若场上有卫，将之移除，然后你失去一点体力。",
               furrykill_huanlian: "幻涟",

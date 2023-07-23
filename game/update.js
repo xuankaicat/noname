@@ -1,10 +1,12 @@
 window.noname_update={
-	version:'1.9.122.3',
+	version:'1.9.122.3.1',
 	update:'1.9.122.2',
 	changeLog:[
 		'整合@copcap @shijian @PBK-B的Pull Request',
 		'增加大量新武将',
 		'其他技能调整和bug修复',
+		'furrykill:',
+		'对翼哥进行削弱'
 	],
 	files:[
 		'extension/FurryKill/extension.js',
